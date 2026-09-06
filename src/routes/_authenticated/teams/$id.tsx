@@ -40,6 +40,7 @@ function TeamPage() {
     }
   }
   const members = data.memberships.filter((membership: any) => membership.status === "member");
+  const neededRoles = data.team.needed_roles ?? [];
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <Link
@@ -57,8 +58,8 @@ function TeamPage() {
         <p className="mt-4 text-sm text-muted-foreground">
           {members.length}/{data.team.max_size} members
         </p>
-        {data.team.needed_roles?.length > 0 && (
-          <p className="mt-2 text-sm">Looking for: {data.team.needed_roles.join(", ")}</p>
+        {neededRoles.length > 0 && (
+          <p className="mt-2 text-sm">Looking for: {neededRoles.join(", ")}</p>
         )}
       </div>
       <section className="mt-8">

@@ -52,7 +52,7 @@ export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
       toast.success("Team created! You're the first member.");
       setOpen(false);
       navigate({ to: "/teams/$id", params: { id: team.id } });
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Could not create team");
     } finally {
       setBusy(false);

@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { isVitEmail } from "./constants";
 
 // Server-side enforcement: only VIT Google accounts may use the app.
@@ -8,9 +10,9 @@ export function assertVitEmail(email: string | null | undefined) {
 }
 
 export async function assertAdmin(
-  supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> },
+  supabase: SupabaseClient<Database>,
   userId: string,
-) {
+): Promise<void> {
   const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (!data) throw new Error("Forbidden: admin only");
 }

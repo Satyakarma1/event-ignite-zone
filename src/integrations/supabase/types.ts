@@ -42,7 +42,15 @@ export type Database = {
           title?: string;
           website_url?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "hackathon_suggestions_suggested_by_fkey";
+            columns: ["suggested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       hackathons: {
         Row: {
@@ -120,6 +128,13 @@ export type Database = {
             columns: ["hackathon_id"];
             isOneToOne: false;
             referencedRelation: "hackathons";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "looking_for_team_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -203,6 +218,13 @@ export type Database = {
             columns: ["team_id"];
             isOneToOne: false;
             referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_memberships_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({ error: (s.error as string) || "" }),
+  validateSearch: (search: Record<string, unknown>) =>
+    typeof search["error"] === "string" ? { error: search["error"] } : {},
   head: () => ({ meta: [{ title: "Sign in — HackMate VIT" }] }),
   component: AuthPage,
 });

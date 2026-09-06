@@ -72,7 +72,7 @@ function HackathonDetail() {
       toast.success("Posted! Others can now see you're looking for a team.");
       setLookingOpen(false);
       queryClient.invalidateQueries({ queryKey: ["hackathon", id] });
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Could not post request");
     }
   }

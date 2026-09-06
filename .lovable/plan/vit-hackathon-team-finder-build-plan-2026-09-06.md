@@ -20,29 +20,34 @@ A platform for VIT students to discover hackathons and find teammates. You (the 
 ## What gets built
 
 ### 1. Auth & profiles (Lovable Cloud)
+
 - Google sign-in only, restricted to `@vitstudent.ac.in` / `@vit.ac.in`.
 - On first login: onboarding form — Name, Registration number (validated format), Phone, Programme/branch, skills, optional socials (Instagram, LinkedIn, GitHub), avatar.
 - Public profile page per user (`/u/<reg-no>`) with skills, socials, and hackathon participation history.
 - Roles table with `admin` role for your account; admin checks are server-side only.
 
 ### 2. Hackathon listings (public)
+
 - Home page: upcoming hackathons with date, time, venue, fee, official link, deadline, tags, and clash warnings ("clashes with X on the same day").
 - Detail page per hackathon: full details + all public teams for it + "request to join hackathon" (a looking-for-team board for users with no team yet).
 - Past events auto-lock (teams become read-only) and move to an archive section.
 
 ### 3. Teams
+
 - Create team per hackathon: name, size limit, description, needed skills/roles, WhatsApp invite link.
 - Join flow: request to join → creator approves/rejects. When full, users join the **waitlist**; creator can admit a waitlisted person by swapping with a current member.
 - Leave team / kick members; members shown with name, reg number, phone (phone visible to team members only).
 - "My Teams" dashboard: teams I lead, teams I'm in, my pending join/waitlist requests.
 
 ### 4. Admin panel (you only)
+
 - Add/edit/delete hackathons with the fields above; clash detector warns when dates overlap.
 - Approval queue for user-submitted hackathons (approve → publish, or reject).
 - Manage the homepage organizer spotlight (your photo, bio, socials).
 - Basic stats: users, teams, requests.
 
 ### 5. User-submitted hackathons
+
 - "Suggest a hackathon" form (name, date, fee, link, description) → lands in the admin queue.
 
 ## Pages

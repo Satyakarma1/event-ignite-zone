@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
@@ -325,12 +326,12 @@ export const getMyDashboard = createServerFn({ method: "GET" })
 
     return {
       memberships: memberships ?? [],
-      ledTeams: (ledTeams ?? []).map((team) => ({
-        ...team,
-        pending_count: (team.team_memberships ?? []).filter(
+      ledTeams: (ledTeams ?? []).map((t) => ({
+        ...t,
+        pending_count: (t.team_memberships ?? []).filter(
           (membership) => membership.status === "pending",
         ).length,
-        waitlist_count: (team.team_memberships ?? []).filter(
+        waitlist_count: (t.team_memberships ?? []).filter(
           (membership) => membership.status === "waitlisted",
         ).length,
         team_memberships: undefined,
