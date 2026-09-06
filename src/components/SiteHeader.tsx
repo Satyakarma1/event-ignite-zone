@@ -98,7 +98,11 @@ export function SiteHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               {profile?.reg_number && (
-                <DropdownMenuItem onClick={() => navigate({ to: "/u/$regNo", params: { regNo: profile.reg_number! } })}>
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigate({ to: "/u/$regNo", params: { regNo: profile.reg_number! } })
+                  }
+                >
                   <User className="mr-2 h-4 w-4" /> My profile
                 </DropdownMenuItem>
               )}

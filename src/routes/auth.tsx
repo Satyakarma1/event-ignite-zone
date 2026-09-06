@@ -19,7 +19,9 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         if (!isVitEmail(session.user.email)) {
           await supabase.auth.signOut();
@@ -55,7 +57,8 @@ function AuthPage() {
         </span>
         <h1 className="mt-4 font-display text-2xl font-bold">Sign in to HackMate</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Use your VIT Google account. Only <span className="font-mono text-xs">@vitstudent.ac.in</span> and{" "}
+          Use your VIT Google account. Only{" "}
+          <span className="font-mono text-xs">@vitstudent.ac.in</span> and{" "}
           <span className="font-mono text-xs">@vit.ac.in</span> emails are accepted.
         </p>
         {error === "domain" && (

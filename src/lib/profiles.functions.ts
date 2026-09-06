@@ -12,7 +12,10 @@ const profileInput = z.object({
   linkedin: z.string().trim().max(200).nullish(),
   github: z.string().trim().max(200).nullish(),
   avatar_url: z.string().trim().url().nullish().or(z.literal("")),
-  phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
 });
 
 export const getMyProfile = createServerFn({ method: "GET" })
@@ -36,9 +39,12 @@ export const completeOnboarding = createServerFn({ method: "POST" })
           .string()
           .trim()
           .toUpperCase()
-          .regex(REG_NUMBER_REGEX, "Format must be like 25BCE2129 (year 20-26, programme code, 4 digits)"),
+          .regex(
+            REG_NUMBER_REGEX,
+            "Format must be like 25BCE2129 (year 20-26, programme code, 4 digits)",
+          ),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -60,7 +66,11 @@ export const updateProfile = createServerFn({ method: "POST" })
     assertVitEmail(context.claims.email as string);
     const { error } = await context.supabase
       .from("profiles")
-      .update({ ...data, avatar_url: data.avatar_url || null, updated_at: new Date().toISOString() })
+      .update({
+        ...data,
+        avatar_url: data.avatar_url || null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
