@@ -1,13 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
-  Link,
   createRootRouteWithContext,
   useRouter,
   HeadContent,
   Scripts,
+  Link,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { SiteHeader } from "@/components/SiteHeader";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -16,7 +19,7 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
+        <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           The page you're looking for doesn't exist or has been moved.
@@ -62,7 +65,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
           >
             Go home
           </a>
@@ -77,21 +80,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "HackMate VIT — Find Hackathon Teammates" },
+      {
+        name: "description",
+        content:
+          "Find teammates for VIT hackathons. Browse upcoming events, create or join teams, and connect with VIT students.",
+      },
+      { property: "og:title", content: "HackMate VIT — Find Hackathon Teammates" },
+      {
+        property: "og:description",
+        content:
+          "Find teammates for VIT hackathons. Browse upcoming events, create or join teams, and connect with VIT students.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -116,11 +128,34 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      router.invalidate();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+    });
+    return () => subscription.unsubscribe();
+  }, [router, queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="flex min-h-screen flex-col bg-background">
+        <SiteHeader />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <footer className="border-t border-border py-8">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-muted-foreground sm:flex-row">
+            <span className="font-mono text-xs tracking-wide">HackMate VIT — by students, for students</span>
+            <span className="text-xs">Only @vitstudent.ac.in / @vit.ac.in accounts can sign in.</span>
+          </div>
+        </footer>
+      </div>
+      <Toaster />
     </QueryClientProvider>
   );
 }
