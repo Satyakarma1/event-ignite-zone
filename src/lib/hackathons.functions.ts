@@ -45,11 +45,16 @@ export const getHackathon = createServerFn({ method: "GET" })
       .select("id, title, starts_at")
       .neq("id", data.id)
       .gte("starts_at", new Date(new Date(hackathon.starts_at).getTime() - 36e5 * 12).toISOString())
-      .lte("starts_at", new Date(new Date(hackathon.starts_at).getTime() + 36e5 * 12).toISOString());
+      .lte(
+        "starts_at",
+        new Date(new Date(hackathon.starts_at).getTime() + 36e5 * 12).toISOString(),
+      );
 
     const { data: teams } = await supabase
       .from("teams")
-      .select("id, name, description, max_size, needed_roles, creator_id, created_at, team_memberships(status)")
+      .select(
+        "id, name, description, max_size, needed_roles, creator_id, created_at, team_memberships(status)",
+      )
       .eq("hackathon_id", data.id)
       .order("created_at", { ascending: false });
 
@@ -95,7 +100,9 @@ export const getPublicProfile = createServerFn({ method: "GET" })
     const supabase = createPublicClient();
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url, id")
+      .select(
+        "full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url, id",
+      )
       .eq("reg_number", data.regNumber.toUpperCase())
       .maybeSingle();
     if (error || !profile) throw new Error("Profile not found");
@@ -122,7 +129,7 @@ export const suggestHackathon = createServerFn({ method: "POST" })
         fee: z.string().trim().max(50).default(""),
         website_url: z.string().trim().url().nullish().or(z.literal("")),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -196,7 +203,7 @@ export const adminListSuggestions = createServerFn({ method: "GET" })
 export const adminSetSuggestionStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), status: z.enum(["approved", "rejected"]) }).parse(d)
+    z.object({ id: z.string().uuid(), status: z.enum(["approved", "rejected"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);

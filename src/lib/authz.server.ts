@@ -9,7 +9,7 @@ export function assertVitEmail(email: string | null | undefined) {
 
 export async function assertAdmin(
   supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> },
-  userId: string
+  userId: string,
 ) {
   const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (!data) throw new Error("Forbidden: admin only");

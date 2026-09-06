@@ -150,8 +150,12 @@ function RootComponent() {
         </main>
         <footer className="border-t border-border py-8">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-muted-foreground sm:flex-row">
-            <span className="font-mono text-xs tracking-wide">HackMate VIT — by students, for students</span>
-            <span className="text-xs">Only @vitstudent.ac.in / @vit.ac.in accounts can sign in.</span>
+            <span className="font-mono text-xs tracking-wide">
+              HackMate VIT — by students, for students
+            </span>
+            <span className="text-xs">
+              Only @vitstudent.ac.in / @vit.ac.in accounts can sign in.
+            </span>
           </div>
         </footer>
       </div>
