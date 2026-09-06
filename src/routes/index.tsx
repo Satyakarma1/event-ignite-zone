@@ -53,8 +53,8 @@ function HomePage() {
             Your next hackathon team is not in a WhatsApp group.
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Browse every hackathon at VIT, create a public team, or join one that's recruiting.
-            No more buried messages — just teammates.
+            Browse every hackathon at VIT, create a public team, or join one that's recruiting. No
+            more buried messages — just teammates.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button size="lg" asChild>
@@ -101,9 +101,21 @@ function HomePage() {
       <section className="border-y border-border bg-secondary/40">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 sm:grid-cols-3">
           {[
-            ["01", "Sign in with VIT email", "Google sign-in restricted to @vitstudent.ac.in and @vit.ac.in accounts."],
-            ["02", "Create or join a team", "Post a public team with the skills you need, or request to join one that's recruiting."],
-            ["03", "Coordinate on WhatsApp", "The team creator shares a group invite link — you sort registration and payment there."],
+            [
+              "01",
+              "Sign in with VIT email",
+              "Google sign-in restricted to @vitstudent.ac.in and @vit.ac.in accounts.",
+            ],
+            [
+              "02",
+              "Create or join a team",
+              "Post a public team with the skills you need, or request to join one that's recruiting.",
+            ],
+            [
+              "03",
+              "Coordinate on WhatsApp",
+              "The team creator shares a group invite link — you sort registration and payment there.",
+            ],
           ].map(([n, title, body]) => (
             <div key={n}>
               <span className="font-mono text-sm text-accent">{n}</span>
@@ -124,7 +136,10 @@ function HomePage() {
             <p className="text-sm text-muted-foreground">Organizer profile coming soon.</p>
           )}
           {organizers.map((o) => (
-            <div key={o.reg_number ?? o.full_name} className="rounded-xl border border-border bg-card p-6">
+            <div
+              key={o.reg_number ?? o.full_name}
+              className="rounded-xl border border-border bg-card p-6"
+            >
               <div className="flex items-center gap-4">
                 <Avatar className="h-14 w-14">
                   <AvatarImage src={o.avatar_url ?? undefined} />
@@ -148,17 +163,35 @@ function HomePage() {
               </div>
               <div className="mt-4 flex gap-3 text-muted-foreground">
                 {o.instagram && (
-                  <a href={o.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:text-accent">
+                  <a
+                    href={o.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                    className="hover:text-accent"
+                  >
                     <Instagram className="h-4 w-4" />
                   </a>
                 )}
                 {o.linkedin && (
-                  <a href={o.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="hover:text-accent">
+                  <a
+                    href={o.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="LinkedIn"
+                    className="hover:text-accent"
+                  >
                     <Linkedin className="h-4 w-4" />
                   </a>
                 )}
                 {o.github && (
-                  <a href={o.github} target="_blank" rel="noreferrer" aria-label="GitHub" className="hover:text-accent">
+                  <a
+                    href={o.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="GitHub"
+                    className="hover:text-accent"
+                  >
                     <Github className="h-4 w-4" />
                   </a>
                 )}

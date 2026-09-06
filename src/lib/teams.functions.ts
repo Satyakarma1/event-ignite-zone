@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createPublicClient } from "./public.server";
 import { assertVitEmail } from "./authz.server";
 
-async function getHackathonLock(supabase: any, hackathonId: string) {
+async function getHackathonLock(supabase: SupabaseClient<Database>, hackathonId: string) {
   const { data } = await supabase
     .from("hackathons")
     .select("starts_at, ends_at")
@@ -29,7 +31,7 @@ export const createTeam = createServerFn({ method: "POST" })
         needed_roles: z.array(z.string().trim().max(40)).max(10).default([]),
         whatsapp_link: z.string().trim().url().nullish().or(z.literal("")),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -64,16 +66,16 @@ export const getTeam = createServerFn({ method: "GET" })
     if (error || !team) throw new Error("Team not found");
     const { data: memberships } = await supabase
       .from("team_memberships")
-      .select("id, status, note, created_at, user_id, profiles(full_name, reg_number, programme, skills, avatar_url)")
+      .select(
+        "id, status, note, created_at, user_id, profiles(full_name, reg_number, programme, skills, avatar_url)",
+      )
       .eq("team_id", data.id);
-    const safe = (memberships ?? []).map((m: any) => ({
+    const safe = (memberships ?? []).map((m) => ({
       ...m,
-      profiles: m.profiles
-        ? { ...m.profiles }
-        : null,
+      profiles: m.profiles ? { ...m.profiles } : null,
     }));
     // WhatsApp link is only returned via getTeamAccess for members — strip here
-    const { whatsapp_link, ...rest } = team as any;
+    const { whatsapp_link, ...rest } = team;
     return { team: rest, memberships: safe };
   });
 
@@ -104,7 +106,7 @@ export const getTeamAccess = createServerFn({ method: "GET" })
         .select("profiles(full_name, reg_number, phone)")
         .eq("team_id", data.teamId)
         .eq("status", "member");
-      memberPhones = (rows ?? []).map((r: any) => r.profiles).filter(Boolean);
+      memberPhones = (rows ?? []).flatMap((row) => (row.profiles ? [row.profiles] : []));
     }
     return {
       myStatus: membership?.status ?? null,
@@ -117,7 +119,7 @@ export const getTeamAccess = createServerFn({ method: "GET" })
 export const requestJoin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ teamId: z.string().uuid(), note: z.string().trim().max(500).default("") }).parse(d)
+    z.object({ teamId: z.string().uuid(), note: z.string().trim().max(500).default("") }).parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -156,7 +158,7 @@ export const setMembershipStatus = createServerFn({ method: "POST" })
         action: z.enum(["approve", "reject", "admit_waitlist"]),
         removeMembershipId: z.string().uuid().optional(),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -172,7 +174,8 @@ export const setMembershipStatus = createServerFn({ method: "POST" })
       .select("creator_id, hackathon_id, max_size")
       .eq("id", membership.team_id)
       .single();
-    if (!team || team.creator_id !== context.userId) throw new Error("Only the team creator can manage members");
+    if (!team || team.creator_id !== context.userId)
+      throw new Error("Only the team creator can manage members");
     await getHackathonLock(context.supabase, team.hackathon_id);
 
     if (data.action === "reject") {
@@ -240,7 +243,8 @@ export const kickMember = createServerFn({ method: "POST" })
       .select("creator_id")
       .eq("id", membership.team_id)
       .single();
-    if (!team || team.creator_id !== context.userId) throw new Error("Only the team creator can remove members");
+    if (!team || team.creator_id !== context.userId)
+      throw new Error("Only the team creator can remove members");
     if (membership.user_id === context.userId) throw new Error("You can't remove yourself");
     const { error } = await context.supabase
       .from("team_memberships")
@@ -276,7 +280,7 @@ export const updateTeam = createServerFn({ method: "POST" })
         needed_roles: z.array(z.string().trim().max(40)).max(10).default([]),
         whatsapp_link: z.string().trim().url().nullish().or(z.literal("")),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -296,7 +300,9 @@ export const getMyDashboard = createServerFn({ method: "GET" })
     assertVitEmail(context.claims.email as string);
     const { data: memberships } = await context.supabase
       .from("team_memberships")
-      .select("id, status, created_at, teams(id, name, max_size, creator_id, hackathons(id, title, starts_at))")
+      .select(
+        "id, status, created_at, teams(id, name, max_size, creator_id, hackathons(id, title, starts_at))",
+      )
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false });
 
@@ -319,10 +325,14 @@ export const getMyDashboard = createServerFn({ method: "GET" })
 
     return {
       memberships: memberships ?? [],
-      ledTeams: (ledTeams ?? []).map((t: any) => ({
+      ledTeams: (ledTeams ?? []).map((t) => ({
         ...t,
-        pending_count: (t.team_memberships ?? []).filter((m: any) => m.status === "pending").length,
-        waitlist_count: (t.team_memberships ?? []).filter((m: any) => m.status === "waitlisted").length,
+        pending_count: (t.team_memberships ?? []).filter(
+          (membership) => membership.status === "pending",
+        ).length,
+        waitlist_count: (t.team_memberships ?? []).filter(
+          (membership) => membership.status === "waitlisted",
+        ).length,
         team_memberships: undefined,
       })),
       suggestions: suggestions ?? [],
@@ -333,7 +343,9 @@ export const getMyDashboard = createServerFn({ method: "GET" })
 export const postLookingForTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ hackathonId: z.string().uuid(), note: z.string().trim().max(500).default("") }).parse(d)
+    z
+      .object({ hackathonId: z.string().uuid(), note: z.string().trim().max(500).default("") })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -342,7 +354,8 @@ export const postLookingForTeam = createServerFn({ method: "POST" })
       .from("looking_for_team")
       .insert({ hackathon_id: data.hackathonId, user_id: context.userId, note: data.note });
     if (error) {
-      if (error.code === "23505") throw new Error("You already posted a request for this hackathon.");
+      if (error.code === "23505")
+        throw new Error("You already posted a request for this hackathon.");
       throw new Error(error.message);
     }
     return { ok: true };

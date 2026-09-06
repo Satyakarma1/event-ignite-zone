@@ -3,7 +3,14 @@ import { queryOptions, useSuspenseQuery, useQuery, useQueryClient } from "@tanst
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
-  CalendarDays, IndianRupee, MapPin, ExternalLink, AlertTriangle, Users, Plus, HandMetal,
+  CalendarDays,
+  IndianRupee,
+  MapPin,
+  ExternalLink,
+  AlertTriangle,
+  Users,
+  Plus,
+  HandMetal,
 } from "lucide-react";
 import { getHackathon } from "@/lib/hackathons.functions";
 import { postLookingForTeam } from "@/lib/teams.functions";
@@ -12,7 +19,13 @@ import { fmtDateTime, fmtFee, isPast } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 
@@ -24,7 +37,10 @@ export const Route = createFileRoute("/hackathons/$id")({
   head: ({ match }) => ({
     meta: [
       { title: "Hackathon details — HackMate VIT" },
-      { name: "description", content: "Hackathon details, recruiting teams, and students looking for a team." },
+      {
+        name: "description",
+        content: "Hackathon details, recruiting teams, and students looking for a team.",
+      },
       { property: "og:title", content: "Hackathon — HackMate VIT" },
       { property: "og:description", content: "See details and find a team for this hackathon." },
       { property: "og:type", content: "website" },
@@ -56,8 +72,8 @@ function HackathonDetail() {
       toast.success("Posted! Others can now see you're looking for a team.");
       setLookingOpen(false);
       queryClient.invalidateQueries({ queryKey: ["hackathon", id] });
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not post request");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not post request");
     }
   }
 
@@ -68,7 +84,9 @@ function HackathonDetail() {
         <div className="flex flex-wrap items-center gap-2">
           {past && <Badge variant="secondary">Ended — teams locked</Badge>}
           {(hackathon.tags ?? []).map((t) => (
-            <Badge key={t} variant="outline" className="font-mono text-[10px]">{t}</Badge>
+            <Badge key={t} variant="outline" className="font-mono text-[10px]">
+              {t}
+            </Badge>
           ))}
         </div>
         <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">{hackathon.title}</h1>
@@ -78,7 +96,10 @@ function HackathonDetail() {
         <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex items-center gap-2 text-muted-foreground">
             <CalendarDays className="h-4 w-4 text-accent" />
-            <span>{fmtDateTime(hackathon.starts_at)}{hackathon.ends_at ? ` → ${fmtDateTime(hackathon.ends_at)}` : ""}</span>
+            <span>
+              {fmtDateTime(hackathon.starts_at)}
+              {hackathon.ends_at ? ` → ${fmtDateTime(hackathon.ends_at)}` : ""}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <IndianRupee className="h-4 w-4 text-accent" /> {fmtFee(hackathon.fee)}
@@ -101,7 +122,10 @@ function HackathonDetail() {
         </div>
         {hackathon.registration_deadline && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Registration deadline: <span className="font-medium text-foreground">{fmtDateTime(hackathon.registration_deadline)}</span>
+            Registration deadline:{" "}
+            <span className="font-medium text-foreground">
+              {fmtDateTime(hackathon.registration_deadline)}
+            </span>
           </p>
         )}
         {clashes.length > 0 && (
@@ -112,7 +136,11 @@ function HackathonDetail() {
               {clashes.map((c, i) => (
                 <span key={c.id}>
                   {i > 0 && ", "}
-                  <Link to="/hackathons/$id" params={{ id: c.id }} className="font-medium text-accent hover:underline">
+                  <Link
+                    to="/hackathons/$id"
+                    params={{ id: c.id }}
+                    className="font-medium text-accent hover:underline"
+                  >
                     {c.title}
                   </Link>
                 </span>
@@ -134,13 +162,14 @@ function HackathonDetail() {
           <h2 className="flex items-center gap-2 font-display text-2xl font-bold">
             <Users className="h-5 w-5 text-accent" /> Teams recruiting ({teams.length})
           </h2>
-          {!past && (
-            session ? (
+          {!past &&
+            (session ? (
               <CreateTeamDialog hackathonId={id} />
             ) : (
-              <Button asChild><Link to="/auth">Sign in to create a team</Link></Button>
-            )
-          )}
+              <Button asChild>
+                <Link to="/auth">Sign in to create a team</Link>
+              </Button>
+            ))}
         </div>
         {teams.length === 0 ? (
           <p className="mt-4 rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
@@ -159,18 +188,29 @@ function HackathonDetail() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-display font-semibold">{t.name}</h3>
-                    <Badge variant={full ? "secondary" : "default"} className={full ? "" : "bg-accent text-accent-foreground"}>
+                    <Badge
+                      variant={full ? "secondary" : "default"}
+                      className={full ? "" : "bg-accent text-accent-foreground"}
+                    >
                       {t.member_count}/{t.max_size} {full ? "· full" : ""}
                     </Badge>
                   </div>
                   {t.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{t.description}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {t.description}
+                    </p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {(t.needed_roles ?? []).map((r) => (
-                      <Badge key={r} variant="outline" className="font-mono text-[10px]">{r}</Badge>
+                      <Badge key={r} variant="outline" className="font-mono text-[10px]">
+                        {r}
+                      </Badge>
                     ))}
-                    {full && <Badge variant="outline" className="text-[10px]">waitlist open</Badge>}
+                    {full && (
+                      <Badge variant="outline" className="text-[10px]">
+                        waitlist open
+                      </Badge>
+                    )}
                   </div>
                 </Link>
               );
@@ -188,10 +228,14 @@ function HackathonDetail() {
           {!past && session && (
             <Dialog open={lookingOpen} onOpenChange={setLookingOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline"><Plus className="mr-2 h-4 w-4" /> I want to join</Button>
+                <Button variant="outline">
+                  <Plus className="mr-2 h-4 w-4" /> I want to join
+                </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Tell teams why they should pick you</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>Tell teams why they should pick you</DialogTitle>
+                </DialogHeader>
                 <Textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -210,7 +254,7 @@ function HackathonDetail() {
           </p>
         ) : (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {looking.map((l: any) => (
+            {looking.map((l) => (
               <div key={l.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -232,7 +276,9 @@ function HackathonDetail() {
                 {l.note && <p className="mt-2 text-sm text-muted-foreground">{l.note}</p>}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {(l.profiles?.skills ?? []).slice(0, 5).map((s: string) => (
-                    <Badge key={s} variant="outline" className="font-mono text-[10px]">{s}</Badge>
+                    <Badge key={s} variant="outline" className="font-mono text-[10px]">
+                      {s}
+                    </Badge>
                   ))}
                 </div>
               </div>

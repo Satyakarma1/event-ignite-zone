@@ -12,9 +12,15 @@ export const Route = createFileRoute("/hackathons/")({
   head: () => ({
     meta: [
       { title: "All Hackathons — HackMate VIT" },
-      { name: "description", content: "Every upcoming and past hackathon at VIT, with teams recruiting members." },
+      {
+        name: "description",
+        content: "Every upcoming and past hackathon at VIT, with teams recruiting members.",
+      },
       { property: "og:title", content: "All Hackathons — HackMate VIT" },
-      { property: "og:description", content: "Every upcoming and past hackathon at VIT, with teams recruiting members." },
+      {
+        property: "og:description",
+        content: "Every upcoming and past hackathon at VIT, with teams recruiting members.",
+      },
       { property: "og:type", content: "website" },
     ],
   }),

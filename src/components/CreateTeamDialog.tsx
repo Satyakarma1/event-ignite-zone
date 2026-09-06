@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
@@ -24,7 +30,10 @@ export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
   });
 
   async function submit() {
-    if (!form.name.trim()) return toast.error("Team name is required");
+    if (!form.name.trim()) {
+      toast.error("Team name is required");
+      return;
+    }
     setBusy(true);
     try {
       const team = await create({
@@ -33,15 +42,18 @@ export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
           name: form.name,
           description: form.description,
           max_size: form.max_size,
-          needed_roles: form.needed_roles.split(",").map((s) => s.trim()).filter(Boolean),
+          needed_roles: form.needed_roles
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
           whatsapp_link: form.whatsapp_link || null,
         },
       });
       toast.success("Team created! You're the first member.");
       setOpen(false);
       navigate({ to: "/teams/$id", params: { id: team.id } });
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not create team");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not create team");
     } finally {
       setBusy(false);
     }
@@ -50,39 +62,67 @@ export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><Plus className="mr-2 h-4 w-4" /> Create a team</Button>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" /> Create a team
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Create a public team</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Create a public team</DialogTitle>
+        </DialogHeader>
         <div className="space-y-4">
           <div>
             <Label htmlFor="team-name">Team name</Label>
-            <Input id="team-name" value={form.name} maxLength={100}
-              onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Null Pointer Exception" />
+            <Input
+              id="team-name"
+              value={form.name}
+              maxLength={100}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Null Pointer Exception"
+            />
           </div>
           <div>
             <Label htmlFor="team-desc">What are you building / who do you need?</Label>
-            <Textarea id="team-desc" value={form.description} rows={3} maxLength={2000}
-              onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Textarea
+              id="team-desc"
+              value={form.description}
+              rows={3}
+              maxLength={2000}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </div>
           <div>
             <Label htmlFor="team-size">Max team size (including you)</Label>
-            <Input id="team-size" type="number" min={1} max={10} value={form.max_size}
-              onChange={(e) => setForm({ ...form, max_size: Number(e.target.value) || 4 })} />
+            <Input
+              id="team-size"
+              type="number"
+              min={1}
+              max={10}
+              value={form.max_size}
+              onChange={(e) => setForm({ ...form, max_size: Number(e.target.value) || 4 })}
+            />
           </div>
           <div>
             <Label htmlFor="team-roles">Roles needed (comma separated)</Label>
-            <Input id="team-roles" value={form.needed_roles}
+            <Input
+              id="team-roles"
+              value={form.needed_roles}
               onChange={(e) => setForm({ ...form, needed_roles: e.target.value })}
-              placeholder="frontend, ML, design" />
+              placeholder="frontend, ML, design"
+            />
           </div>
           <div>
             <Label htmlFor="team-wa">WhatsApp group invite link (optional, members only)</Label>
-            <Input id="team-wa" value={form.whatsapp_link} type="url"
+            <Input
+              id="team-wa"
+              value={form.whatsapp_link}
+              type="url"
               onChange={(e) => setForm({ ...form, whatsapp_link: e.target.value })}
-              placeholder="https://chat.whatsapp.com/…" />
+              placeholder="https://chat.whatsapp.com/…"
+            />
             <p className="mt-1 text-xs text-muted-foreground">
-              Create a group in WhatsApp → Group info → Invite via link → paste it here. Only approved members see it.
+              Create a group in WhatsApp → Group info → Invite via link → paste it here. Only
+              approved members see it.
             </p>
           </div>
           <Button className="w-full" onClick={submit} disabled={busy}>

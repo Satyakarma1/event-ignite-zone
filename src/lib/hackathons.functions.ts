@@ -8,12 +8,34 @@ const hackathonInput = z.object({
   title: z.string().trim().min(2).max(200),
   description: z.string().trim().max(5000).default(""),
   starts_at: z.string().min(4),
-  ends_at: z.string().nullish(),
-  registration_deadline: z.string().nullish(),
+  ends_at: z
+    .string()
+    .nullish()
+    .transform((value) => value || null),
+  registration_deadline: z
+    .string()
+    .nullish()
+    .transform((value) => value || null),
   fee: z.number().int().min(0).default(0),
-  website_url: z.string().trim().url().nullish().or(z.literal("")),
-  venue: z.string().trim().max(200).nullish(),
-  organizer_club: z.string().trim().max(200).nullish(),
+  website_url: z
+    .string()
+    .trim()
+    .url()
+    .nullish()
+    .or(z.literal(""))
+    .transform((value) => value || null),
+  venue: z
+    .string()
+    .trim()
+    .max(200)
+    .nullish()
+    .transform((value) => value || null),
+  organizer_club: z
+    .string()
+    .trim()
+    .max(200)
+    .nullish()
+    .transform((value) => value || null),
   tags: z.array(z.string().trim().max(40)).max(10).default([]),
 });
 
@@ -45,11 +67,16 @@ export const getHackathon = createServerFn({ method: "GET" })
       .select("id, title, starts_at")
       .neq("id", data.id)
       .gte("starts_at", new Date(new Date(hackathon.starts_at).getTime() - 36e5 * 12).toISOString())
-      .lte("starts_at", new Date(new Date(hackathon.starts_at).getTime() + 36e5 * 12).toISOString());
+      .lte(
+        "starts_at",
+        new Date(new Date(hackathon.starts_at).getTime() + 36e5 * 12).toISOString(),
+      );
 
     const { data: teams } = await supabase
       .from("teams")
-      .select("id, name, description, max_size, needed_roles, creator_id, created_at, team_memberships(status)")
+      .select(
+        "id, name, description, max_size, needed_roles, creator_id, created_at, team_memberships(status)",
+      )
       .eq("hackathon_id", data.id)
       .order("created_at", { ascending: false });
 
@@ -95,7 +122,9 @@ export const getPublicProfile = createServerFn({ method: "GET" })
     const supabase = createPublicClient();
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url, id")
+      .select(
+        "full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url, id",
+      )
       .eq("reg_number", data.regNumber.toUpperCase())
       .maybeSingle();
     if (error || !profile) throw new Error("Profile not found");
@@ -120,15 +149,21 @@ export const suggestHackathon = createServerFn({ method: "POST" })
         description: z.string().trim().max(2000).default(""),
         event_date: z.string().trim().max(100).default(""),
         fee: z.string().trim().max(50).default(""),
-        website_url: z.string().trim().url().nullish().or(z.literal("")),
+        website_url: z
+          .string()
+          .trim()
+          .url()
+          .nullish()
+          .or(z.literal(""))
+          .transform((value) => value || null),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
     const { error } = await context.supabase.from("hackathon_suggestions").insert({
-      ...data,
       suggested_by: context.userId,
+      ...data,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -146,7 +181,6 @@ export const adminCreateHackathon = createServerFn({ method: "POST" })
       .from("hackathons")
       .insert({
         ...data,
-        website_url: data.website_url || null,
         created_by: context.userId,
       })
       .select("id")
@@ -163,7 +197,7 @@ export const adminUpdateHackathon = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { error } = await context.supabase
       .from("hackathons")
-      .update({ ...data.patch, website_url: data.patch.website_url || null })
+      .update(data.patch)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -196,7 +230,7 @@ export const adminListSuggestions = createServerFn({ method: "GET" })
 export const adminSetSuggestionStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), status: z.enum(["approved", "rejected"]) }).parse(d)
+    z.object({ id: z.string().uuid(), status: z.enum(["approved", "rejected"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
