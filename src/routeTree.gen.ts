@@ -10,33 +10,156 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedSuggestRouteImport } from './routes/_authenticated/suggest'
+import { Route as HackathonsIndexRouteImport } from './routes/hackathons/index'
+import { Route as HackathonsIdRouteImport } from './routes/hackathons/$id'
+import { Route as AuthenticatedTeamsIdRouteImport } from './routes/_authenticated/teams/$id'
+import { Route as AuthenticatedURegNoRouteImport } from './routes/_authenticated/u/$regNo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSuggestRoute = AuthenticatedSuggestRouteImport.update({
+  id: '/suggest',
+  path: '/suggest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const HackathonsIndexRoute = HackathonsIndexRouteImport.update({
+  id: '/hackathons/',
+  path: '/hackathons/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HackathonsIdRoute = HackathonsIdRouteImport.update({
+  id: '/hackathons/$id',
+  path: '/hackathons/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTeamsIdRoute = AuthenticatedTeamsIdRouteImport.update({
+  id: '/teams/$id',
+  path: '/teams/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedURegNoRoute = AuthenticatedURegNoRouteImport.update({
+  id: '/u/$regNo',
+  path: '/u/$regNo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/suggest': typeof AuthenticatedSuggestRoute
+  '/hackathons/$id': typeof HackathonsIdRoute
+  '/hackathons/': typeof HackathonsIndexRoute
+  '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/u/$regNo': typeof AuthenticatedURegNoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/suggest': typeof AuthenticatedSuggestRoute
+  '/hackathons/$id': typeof HackathonsIdRoute
+  '/hackathons': typeof HackathonsIndexRoute
+  '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/u/$regNo': typeof AuthenticatedURegNoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/suggest': typeof AuthenticatedSuggestRoute
+  '/hackathons/$id': typeof HackathonsIdRoute
+  '/hackathons/': typeof HackathonsIndexRoute
+  '/_authenticated/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/_authenticated/u/$regNo': typeof AuthenticatedURegNoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/dashboard'
+    | '/onboarding'
+    | '/suggest'
+    | '/hackathons/$id'
+    | '/hackathons/'
+    | '/teams/$id'
+    | '/u/$regNo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/dashboard'
+    | '/onboarding'
+    | '/suggest'
+    | '/hackathons/$id'
+    | '/hackathons'
+    | '/teams/$id'
+    | '/u/$regNo'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/admin'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/suggest'
+    | '/hackathons/$id'
+    | '/hackathons/'
+    | '/_authenticated/teams/$id'
+    | '/_authenticated/u/$regNo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  HackathonsIdRoute: typeof HackathonsIdRoute
+  HackathonsIndexRoute: typeof HackathonsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +171,106 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/suggest': {
+      id: '/_authenticated/suggest'
+      path: '/suggest'
+      fullPath: '/suggest'
+      preLoaderRoute: typeof AuthenticatedSuggestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/hackathons/': {
+      id: '/hackathons/'
+      path: '/hackathons'
+      fullPath: '/hackathons/'
+      preLoaderRoute: typeof HackathonsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hackathons/$id': {
+      id: '/hackathons/$id'
+      path: '/hackathons/$id'
+      fullPath: '/hackathons/$id'
+      preLoaderRoute: typeof HackathonsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/teams/$id': {
+      id: '/_authenticated/teams/$id'
+      path: '/teams/$id'
+      fullPath: '/teams/$id'
+      preLoaderRoute: typeof AuthenticatedTeamsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/u/$regNo': {
+      id: '/_authenticated/u/$regNo'
+      path: '/u/$regNo'
+      fullPath: '/u/$regNo'
+      preLoaderRoute: typeof AuthenticatedURegNoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedSuggestRoute: typeof AuthenticatedSuggestRoute
+  AuthenticatedTeamsIdRoute: typeof AuthenticatedTeamsIdRoute
+  AuthenticatedURegNoRoute: typeof AuthenticatedURegNoRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedSuggestRoute: AuthenticatedSuggestRoute,
+  AuthenticatedTeamsIdRoute: AuthenticatedTeamsIdRoute,
+  AuthenticatedURegNoRoute: AuthenticatedURegNoRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  HackathonsIdRoute: HackathonsIdRoute,
+  HackathonsIndexRoute: HackathonsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
