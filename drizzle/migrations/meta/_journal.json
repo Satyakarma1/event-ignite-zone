@@ -15,6 +15,13 @@
       "when": 1788722531195,
       "tag": "0001_looking_for_team",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788761996118,
+      "tag": "0002_privacy_vit_enforcement_atomic_teams",
+      "breakpoints": true
     }
   ]
 }
