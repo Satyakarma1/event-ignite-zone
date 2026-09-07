@@ -21,6 +21,7 @@ export type Database = {
           event_date: string | null
           fee: string | null
           id: string
+          published_hackathon_id: string | null
           status: string
           suggested_by: string | null
           title: string
@@ -32,6 +33,7 @@ export type Database = {
           event_date?: string | null
           fee?: string | null
           id?: string
+          published_hackathon_id?: string | null
           status?: string
           suggested_by?: string | null
           title: string
@@ -43,12 +45,21 @@ export type Database = {
           event_date?: string | null
           fee?: string | null
           id?: string
+          published_hackathon_id?: string | null
           status?: string
           suggested_by?: string | null
           title?: string
           website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hackathon_suggestions_published_hackathon_id_fkey"
+            columns: ["published_hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hackathons: {
         Row: {
@@ -277,9 +288,88 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_organizers: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          github: string | null
+          id: string | null
+          instagram: string | null
+          linkedin: string | null
+          programme: string | null
+          reg_number: string | null
+          skills: string[] | null
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          github: string | null
+          id: string | null
+          instagram: string | null
+          linkedin: string | null
+          programme: string | null
+          reg_number: string | null
+          skills: string[] | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          github?: string | null
+          id?: string | null
+          instagram?: string | null
+          linkedin?: string | null
+          programme?: string | null
+          reg_number?: string | null
+          skills?: string[] | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          github?: string | null
+          id?: string | null
+          instagram?: string | null
+          linkedin?: string | null
+          programme?: string | null
+          reg_number?: string | null
+          skills?: string[] | null
+        }
+        Relationships: []
+      }
+      public_team_members: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          programme: string | null
+          reg_number: string | null
+          skills: string[] | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      decide_membership: {
+        Args: {
+          _action: string
+          _membership_id: string
+          _remove_membership_id?: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -293,6 +383,12 @@ export type Database = {
       }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_vit_user: { Args: never; Returns: boolean }
+      join_team: { Args: { _note?: string; _team_id: string }; Returns: string }
+      shares_team_with: {
+        Args: { _other_user_id: string; _user_id: string }
         Returns: boolean
       }
     }
