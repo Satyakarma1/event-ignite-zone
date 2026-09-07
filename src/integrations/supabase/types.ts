@@ -1,436 +1,426 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5";
-  };
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       hackathon_suggestions: {
         Row: {
-          created_at: string;
-          description: string | null;
-          event_date: string | null;
-          fee: string | null;
-          id: string;
-          status: string;
-          suggested_by: string | null;
-          title: string;
-          website_url: string | null;
-        };
+          created_at: string
+          description: string | null
+          event_date: string | null
+          fee: string | null
+          id: string
+          status: string
+          suggested_by: string | null
+          title: string
+          website_url: string | null
+        }
         Insert: {
-          created_at?: string;
-          description?: string | null;
-          event_date?: string | null;
-          fee?: string | null;
-          id?: string;
-          status?: string;
-          suggested_by?: string | null;
-          title: string;
-          website_url?: string | null;
-        };
+          created_at?: string
+          description?: string | null
+          event_date?: string | null
+          fee?: string | null
+          id?: string
+          status?: string
+          suggested_by?: string | null
+          title: string
+          website_url?: string | null
+        }
         Update: {
-          created_at?: string;
-          description?: string | null;
-          event_date?: string | null;
-          fee?: string | null;
-          id?: string;
-          status?: string;
-          suggested_by?: string | null;
-          title?: string;
-          website_url?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "hackathon_suggestions_suggested_by_fkey";
-            columns: ["suggested_by"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
+          created_at?: string
+          description?: string | null
+          event_date?: string | null
+          fee?: string | null
+          id?: string
+          status?: string
+          suggested_by?: string | null
+          title?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       hackathons: {
         Row: {
-          created_at: string;
-          created_by: string | null;
-          description: string | null;
-          ends_at: string | null;
-          fee: number;
-          id: string;
-          organizer_club: string | null;
-          registration_deadline: string | null;
-          starts_at: string;
-          tags: string[] | null;
-          title: string;
-          venue: string | null;
-          website_url: string | null;
-        };
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          fee: number
+          id: string
+          organizer_club: string | null
+          registration_deadline: string | null
+          starts_at: string
+          tags: string[] | null
+          title: string
+          venue: string | null
+          website_url: string | null
+        }
         Insert: {
-          created_at?: string;
-          created_by?: string | null;
-          description?: string | null;
-          ends_at?: string | null;
-          fee?: number;
-          id?: string;
-          organizer_club?: string | null;
-          registration_deadline?: string | null;
-          starts_at: string;
-          tags?: string[] | null;
-          title: string;
-          venue?: string | null;
-          website_url?: string | null;
-        };
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          fee?: number
+          id?: string
+          organizer_club?: string | null
+          registration_deadline?: string | null
+          starts_at: string
+          tags?: string[] | null
+          title: string
+          venue?: string | null
+          website_url?: string | null
+        }
         Update: {
-          created_at?: string;
-          created_by?: string | null;
-          description?: string | null;
-          ends_at?: string | null;
-          fee?: number;
-          id?: string;
-          organizer_club?: string | null;
-          registration_deadline?: string | null;
-          starts_at?: string;
-          tags?: string[] | null;
-          title?: string;
-          venue?: string | null;
-          website_url?: string | null;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          fee?: number
+          id?: string
+          organizer_club?: string | null
+          registration_deadline?: string | null
+          starts_at?: string
+          tags?: string[] | null
+          title?: string
+          venue?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       looking_for_team: {
         Row: {
-          created_at: string;
-          hackathon_id: string;
-          id: string;
-          note: string | null;
-          user_id: string;
-        };
+          created_at: string
+          hackathon_id: string
+          id: string
+          note: string | null
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          hackathon_id: string;
-          id?: string;
-          note?: string | null;
-          user_id: string;
-        };
+          created_at?: string
+          hackathon_id: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
         Update: {
-          created_at?: string;
-          hackathon_id?: string;
-          id?: string;
-          note?: string | null;
-          user_id?: string;
-        };
+          created_at?: string
+          hackathon_id?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "looking_for_team_hackathon_id_fkey";
-            columns: ["hackathon_id"];
-            isOneToOne: false;
-            referencedRelation: "hackathons";
-            referencedColumns: ["id"];
+            foreignKeyName: "looking_for_team_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "looking_for_team_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
+        ]
+      }
       profiles: {
         Row: {
-          avatar_url: string | null;
-          created_at: string;
-          email: string;
-          full_name: string;
-          github: string | null;
-          id: string;
-          instagram: string | null;
-          linkedin: string | null;
-          phone: string | null;
-          programme: string | null;
-          reg_number: string | null;
-          skills: string[] | null;
-          updated_at: string;
-        };
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          github: string | null
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          phone: string | null
+          programme: string | null
+          reg_number: string | null
+          skills: string[] | null
+          updated_at: string
+        }
         Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          email?: string;
-          full_name?: string;
-          github?: string | null;
-          id: string;
-          instagram?: string | null;
-          linkedin?: string | null;
-          phone?: string | null;
-          programme?: string | null;
-          reg_number?: string | null;
-          skills?: string[] | null;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          github?: string | null
+          id: string
+          instagram?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          programme?: string | null
+          reg_number?: string | null
+          skills?: string[] | null
+          updated_at?: string
+        }
         Update: {
-          avatar_url?: string | null;
-          created_at?: string;
-          email?: string;
-          full_name?: string;
-          github?: string | null;
-          id?: string;
-          instagram?: string | null;
-          linkedin?: string | null;
-          phone?: string | null;
-          programme?: string | null;
-          reg_number?: string | null;
-          skills?: string[] | null;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          github?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          programme?: string | null
+          reg_number?: string | null
+          skills?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       team_memberships: {
         Row: {
-          created_at: string;
-          id: string;
-          note: string | null;
-          status: string;
-          team_id: string;
-          user_id: string;
-        };
+          created_at: string
+          id: string
+          note: string | null
+          status: string
+          team_id: string
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          note?: string | null;
-          status?: string;
-          team_id: string;
-          user_id: string;
-        };
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          team_id: string
+          user_id: string
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          note?: string | null;
-          status?: string;
-          team_id?: string;
-          user_id?: string;
-        };
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          team_id?: string
+          user_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "team_memberships_team_id_fkey";
-            columns: ["team_id"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["id"];
+            foreignKeyName: "team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "team_memberships_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
+        ]
+      }
       teams: {
         Row: {
-          created_at: string;
-          creator_id: string;
-          description: string | null;
-          hackathon_id: string;
-          id: string;
-          max_size: number;
-          name: string;
-          needed_roles: string[] | null;
-          whatsapp_link: string | null;
-        };
+          created_at: string
+          creator_id: string
+          description: string | null
+          hackathon_id: string
+          id: string
+          max_size: number
+          name: string
+          needed_roles: string[] | null
+          whatsapp_link: string | null
+        }
         Insert: {
-          created_at?: string;
-          creator_id: string;
-          description?: string | null;
-          hackathon_id: string;
-          id?: string;
-          max_size?: number;
-          name: string;
-          needed_roles?: string[] | null;
-          whatsapp_link?: string | null;
-        };
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          hackathon_id: string
+          id?: string
+          max_size?: number
+          name: string
+          needed_roles?: string[] | null
+          whatsapp_link?: string | null
+        }
         Update: {
-          created_at?: string;
-          creator_id?: string;
-          description?: string | null;
-          hackathon_id?: string;
-          id?: string;
-          max_size?: number;
-          name?: string;
-          needed_roles?: string[] | null;
-          whatsapp_link?: string | null;
-        };
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          hackathon_id?: string
+          id?: string
+          max_size?: number
+          name?: string
+          needed_roles?: string[] | null
+          whatsapp_link?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "teams_hackathon_id_fkey";
-            columns: ["hackathon_id"];
-            isOneToOne: false;
-            referencedRelation: "hackathons";
-            referencedColumns: ["id"];
+            foreignKeyName: "teams_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       user_roles: {
         Row: {
-          id: string;
-          role: Database["public"]["Enums"]["app_role"];
-          user_id: string;
-        };
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          role: Database["public"]["Enums"]["app_role"];
-          user_id: string;
-        };
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
         Update: {
-          id?: string;
-          role?: Database["public"]["Enums"]["app_role"];
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-    };
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"];
-          _user_id: string;
-        };
-        Returns: boolean;
-      };
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_team_creator: {
-        Args: { _team_id: string; _user_id: string };
-        Returns: boolean;
-      };
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_team_member: {
-        Args: { _team_id: string; _user_id: string };
-        Returns: boolean;
-      };
-    };
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+    }
     Enums: {
-      app_role: "admin";
-    };
+      app_role: "admin"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never;
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   public: {
@@ -438,4 +428,4 @@ export const Constants = {
       app_role: ["admin"],
     },
   },
-} as const;
+} as const
