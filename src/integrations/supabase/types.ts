@@ -362,6 +362,8 @@ export type Database = {
       }
     }
     Functions: {
+      admin_exists: { Args: never; Returns: boolean }
+      claim_first_admin: { Args: never; Returns: boolean }
       decide_membership: {
         Args: {
           _action: string
