@@ -275,7 +275,7 @@ function HackathonDetail() {
                 </div>
                 {l.note && <p className="mt-2 text-sm text-muted-foreground">{l.note}</p>}
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {(l.profiles?.skills ?? []).slice(0, 5).map((s: string) => (
+                  {(l.profiles?.skills ?? []).slice(0, 5).map((s) => (
                     <Badge key={s} variant="outline" className="font-mono text-[10px]">
                       {s}
                     </Badge>
