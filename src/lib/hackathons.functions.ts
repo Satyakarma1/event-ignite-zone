@@ -302,6 +302,23 @@ export const adminStats = createServerFn({ method: "GET" })
     };
   });
 
+/** True while nobody holds the admin role — lets the first VIT account claim it. */
+export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
+  const supabase = createPublicClient();
+  const { data } = await supabase.rpc("admin_exists");
+  return { exists: !!data };
+});
+
+export const claimFirstAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    assertVitEmail(context.claims.email as string);
+    const { data, error } = await context.supabase.rpc("claim_first_admin");
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("An admin already exists — ask them to grant you access.");
+    return { ok: true };
+  });
+
 export const isAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
