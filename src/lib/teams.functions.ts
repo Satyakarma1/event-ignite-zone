@@ -64,19 +64,57 @@ export const getTeam = createServerFn({ method: "GET" })
       .eq("id", data.id)
       .single();
     if (error || !team) throw new Error("Team not found");
-    const { data: memberships } = await supabase
-      .from("team_memberships")
-      .select(
-        "id, status, note, created_at, user_id, profiles(full_name, reg_number, programme, skills, avatar_url)",
-      )
+
+    // Only confirmed members are public, and only through the safe view.
+    const { data: memberRows } = await supabase
+      .from("public_team_members")
+      .select("id, user_id, full_name, reg_number, programme, skills, avatar_url")
       .eq("team_id", data.id);
-    const safe = (memberships ?? []).map((m) => ({
-      ...m,
-      profiles: m.profiles ? { ...m.profiles } : null,
+
+    const members = (memberRows ?? []).map((m) => ({
+      id: m.id as string,
+      user_id: m.user_id as string | null,
+      full_name: (m.full_name as string | null) ?? "Student",
+      reg_number: m.reg_number as string | null,
+      programme: m.programme as string | null,
+      skills: (m.skills as string[] | null) ?? [],
+      avatar_url: m.avatar_url as string | null,
     }));
+
     // WhatsApp link is only returned via getTeamAccess for members — strip here
-    const { whatsapp_link, ...rest } = team;
-    return { team: rest, memberships: safe };
+    const { whatsapp_link: _link, ...rest } = team;
+    return { team: rest, members };
+  });
+
+/** Creator-only: pending join requests and waitlist for a team. */
+export const getTeamRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ teamId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: team } = await context.supabase
+      .from("teams")
+      .select("creator_id")
+      .eq("id", data.teamId)
+      .single();
+    if (!team || team.creator_id !== context.userId) return { requests: [] };
+
+    const { data: rows } = await context.supabase
+      .from("team_memberships")
+      .select("id, status, note, created_at, user_id, profiles(full_name, reg_number, programme)")
+      .eq("team_id", data.teamId)
+      .in("status", ["pending", "waitlisted"])
+      .order("created_at", { ascending: true });
+
+    return {
+      requests: (rows ?? []).map((r) => ({
+        id: r.id as string,
+        status: r.status as string,
+        note: (r.note as string | null) ?? "",
+        full_name: r.profiles?.full_name ?? "Student",
+        reg_number: r.profiles?.reg_number ?? null,
+        programme: r.profiles?.programme ?? null,
+      })),
+    };
   });
 
 export const getTeamAccess = createServerFn({ method: "GET" })
