@@ -108,15 +108,30 @@ export const getHackathon = createServerFn({ method: "GET" })
           .in("id", lookingIds)
       : { data: [] as Array<Record<string, unknown>> };
 
-    const profileById = new Map(
-      (lookingProfiles ?? []).map((p) => [p["id"] as string, p])
+    type LookingProfile = {
+      full_name: string | null;
+      reg_number: string | null;
+      programme: string | null;
+      skills: string[] | null;
+    };
+
+    const profileById = new Map<string, LookingProfile>(
+      (lookingProfiles ?? []).map((p) => [
+        p["id"] as string,
+        {
+          full_name: (p["full_name"] as string | null) ?? null,
+          reg_number: (p["reg_number"] as string | null) ?? null,
+          programme: (p["programme"] as string | null) ?? null,
+          skills: (p["skills"] as string[] | null) ?? [],
+        },
+      ]),
     );
 
     const shapedLooking = looking.map((l) => ({
-      id: l.id,
-      note: l.note,
-      created_at: l.created_at,
-      profile: profileById.get(l.user_id) ?? null,
+      id: l.id as string,
+      note: (l.note as string | null) ?? "",
+      created_at: l.created_at as string,
+      profiles: profileById.get(l.user_id as string) ?? null,
     }));
 
     return { hackathon, clashes: clashesRes.data ?? [], teams: shapedTeams, looking: shapedLooking };

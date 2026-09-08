@@ -161,30 +161,16 @@ export const requestJoin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    const { data: team } = await context.supabase
-      .from("teams")
-      .select("hackathon_id, max_size")
-      .eq("id", data.teamId)
-      .single();
-    if (!team) throw new Error("Team not found");
-    await getHackathonLock(context.supabase, team.hackathon_id);
-
-    const { data: members } = await context.supabase
-      .from("team_memberships")
-      .select("status")
-      .eq("team_id", data.teamId)
-      .eq("status", "member");
-    const full = (members?.length ?? 0) >= team.max_size;
-    const status = full ? "waitlisted" : "pending";
-
-    const { error } = await context.supabase
-      .from("team_memberships")
-      .insert({ team_id: data.teamId, user_id: context.userId, status, note: data.note });
+    // Single transaction in the database: capacity check + insert can't race.
+    const { data: status, error } = await context.supabase.rpc("join_team", {
+      _team_id: data.teamId,
+      _note: data.note,
+    });
     if (error) {
       if (error.code === "23505") throw new Error("You already requested to join this team.");
       throw new Error(error.message);
     }
-    return { status };
+    return { status: (status as string) ?? "pending" };
   });
 
 export const setMembershipStatus = createServerFn({ method: "POST" })
@@ -200,55 +186,14 @@ export const setMembershipStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    const { data: membership } = await context.supabase
-      .from("team_memberships")
-      .select("id, team_id, status")
-      .eq("id", data.membershipId)
-      .single();
-    if (!membership) throw new Error("Request not found");
-
-    const { data: team } = await context.supabase
-      .from("teams")
-      .select("creator_id, hackathon_id, max_size")
-      .eq("id", membership.team_id)
-      .single();
-    if (!team || team.creator_id !== context.userId)
-      throw new Error("Only the team creator can manage members");
-    await getHackathonLock(context.supabase, team.hackathon_id);
-
-    if (data.action === "reject") {
-      const { error } = await context.supabase
-        .from("team_memberships")
-        .delete()
-        .eq("id", data.membershipId);
-      if (error) throw new Error(error.message);
-      return { ok: true };
-    }
-
-    const { data: members } = await context.supabase
-      .from("team_memberships")
-      .select("id")
-      .eq("team_id", membership.team_id)
-      .eq("status", "member");
-    const full = (members?.length ?? 0) >= team.max_size;
-
-    if (full) {
-      if (data.action !== "admit_waitlist" || !data.removeMembershipId) {
-        throw new Error("Team is full — remove a member first or use the waitlist swap.");
-      }
-      const { error: delErr } = await context.supabase
-        .from("team_memberships")
-        .delete()
-        .eq("id", data.removeMembershipId);
-      if (delErr) throw new Error(delErr.message);
-    }
-
-    const { error } = await context.supabase
-      .from("team_memberships")
-      .update({ status: "member" })
-      .eq("id", data.membershipId);
+    // Approval, rejection and waitlist swaps all run atomically in the database.
+    const { data: result, error } = await context.supabase.rpc("decide_membership", {
+      _membership_id: data.membershipId,
+      _action: data.action === "reject" ? "reject" : "approve",
+      _remove_membership_id: data.removeMembershipId ?? undefined,
+    });
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, status: result as string };
   });
 
 export const leaveTeam = createServerFn({ method: "POST" })
