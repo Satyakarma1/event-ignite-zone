@@ -95,13 +95,7 @@ function toPayload(form: EventForm) {
   };
 }
 
-function EventFields({
-  form,
-  setForm,
-}: {
-  form: EventForm;
-  setForm: (f: EventForm) => void;
-}) {
+function EventFields({ form, setForm }: { form: EventForm; setForm: (f: EventForm) => void }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">

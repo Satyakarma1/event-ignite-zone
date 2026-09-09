@@ -134,7 +134,12 @@ export const getHackathon = createServerFn({ method: "GET" })
       profiles: profileById.get(l.user_id as string) ?? null,
     }));
 
-    return { hackathon, clashes: clashesRes.data ?? [], teams: shapedTeams, looking: shapedLooking };
+    return {
+      hackathon,
+      clashes: clashesRes.data ?? [],
+      teams: shapedTeams,
+      looking: shapedLooking,
+    };
   });
 
 export const getOrganizers = createServerFn({ method: "GET" }).handler(async () => {
@@ -151,7 +156,9 @@ export const getPublicProfile = createServerFn({ method: "GET" })
     const supabase = createPublicClient();
     const { data: profile, error } = await supabase
       .from("public_profiles")
-      .select("id, full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url")
+      .select(
+        "id, full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url",
+      )
       .eq("reg_number", data.regNumber.toUpperCase())
       .maybeSingle();
     if (error || !profile) throw new Error("Profile not found");
@@ -162,15 +169,22 @@ export const getPublicProfile = createServerFn({ method: "GET" })
       .eq("user_id", profile.id!);
 
     const teamIds = (memberships ?? []).map((m) => m.team_id).filter(Boolean) as string[];
-    const { data: teams } = teamIds.length
-      ? await supabase
-          .from("teams")
-          .select("id, name, hackathons(id, title, starts_at)")
-          .in("id", teamIds)
-      : { data: [] as Array<Record<string, unknown>> };
+    type TeamRow = { id: string; name: string; hackathon_title: string | null };
+    let teams: TeamRow[] = [];
+    if (teamIds.length) {
+      const { data: rows } = await supabase
+        .from("teams")
+        .select("id, name, hackathons(title)")
+        .in("id", teamIds);
+      teams = (rows ?? []).map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        hackathon_title: row.hackathons?.title ?? null,
+      }));
+    }
 
     const { id: _id, ...safeProfile } = profile;
-    return { profile: safeProfile, teams: teams ?? [] };
+    return { profile: safeProfile, teams };
   });
 
 // ---------- user actions ----------
@@ -186,7 +200,7 @@ export const suggestHackathon = createServerFn({ method: "POST" })
         fee: z.string().trim().max(50).default(""),
         website_url: z.string().trim().url().nullish().or(z.literal("")),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -207,7 +221,7 @@ export const suggestHackathon = createServerFn({ method: "POST" })
 export const adminCreateHackathon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ hackathon: hackathonInput, fromSuggestionId: z.string().uuid().nullish() }).parse(d)
+    z.object({ hackathon: hackathonInput, fromSuggestionId: z.string().uuid().nullish() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);

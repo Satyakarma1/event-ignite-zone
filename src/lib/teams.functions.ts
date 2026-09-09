@@ -100,20 +100,32 @@ export const getTeamRequests = createServerFn({ method: "GET" })
 
     const { data: rows } = await context.supabase
       .from("team_memberships")
-      .select("id, status, note, created_at, user_id, profiles(full_name, reg_number, programme)")
+      .select("id, status, note, created_at, user_id")
       .eq("team_id", data.teamId)
       .in("status", ["pending", "waitlisted"])
       .order("created_at", { ascending: true });
 
+    const userIds = (rows ?? []).map((r) => r.user_id);
+    const { data: profiles } = userIds.length
+      ? await context.supabase
+          .from("profiles")
+          .select("id, full_name, reg_number, programme")
+          .in("id", userIds)
+      : { data: [] };
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+
     return {
-      requests: (rows ?? []).map((r) => ({
-        id: r.id as string,
-        status: r.status as string,
-        note: (r.note as string | null) ?? "",
-        full_name: r.profiles?.full_name ?? "Student",
-        reg_number: r.profiles?.reg_number ?? null,
-        programme: r.profiles?.programme ?? null,
-      })),
+      requests: (rows ?? []).map((r) => {
+        const profile = byId.get(r.user_id);
+        return {
+          id: r.id,
+          status: r.status,
+          note: r.note ?? "",
+          full_name: profile?.full_name ?? "Student",
+          reg_number: profile?.reg_number ?? null,
+          programme: profile?.programme ?? null,
+        };
+      }),
     };
   });
 
@@ -141,12 +153,24 @@ export const getTeamAccess = createServerFn({ method: "GET" })
     if (isMember || isCreator) {
       const { data: rows } = await context.supabase
         .from("team_memberships")
-        .select("profiles(full_name, reg_number, phone)")
+        .select("user_id")
         .eq("team_id", data.teamId)
         .eq("status", "member");
-      memberPhones = (rows ?? []).flatMap((row) => (row.profiles ? [row.profiles] : []));
+      const ids = (rows ?? []).map((row) => row.user_id);
+      if (ids.length) {
+        const { data: profiles } = await context.supabase
+          .from("profiles")
+          .select("full_name, reg_number, phone")
+          .in("id", ids);
+        memberPhones = (profiles ?? []).map((p) => ({
+          full_name: p.full_name,
+          reg_number: p.reg_number,
+          phone: p.phone,
+        }));
+      }
     }
     return {
+      userId: context.userId,
       myStatus: membership?.status ?? null,
       isCreator,
       whatsapp_link: isMember || isCreator ? team.whatsapp_link : null,
@@ -190,7 +214,7 @@ export const setMembershipStatus = createServerFn({ method: "POST" })
     const { data: result, error } = await context.supabase.rpc("decide_membership", {
       _membership_id: data.membershipId,
       _action: data.action === "reject" ? "reject" : "approve",
-      _remove_membership_id: data.removeMembershipId ?? undefined,
+      ...(data.removeMembershipId ? { _remove_membership_id: data.removeMembershipId } : {}),
     });
     if (error) throw new Error(error.message);
     return { ok: true, status: result as string };
