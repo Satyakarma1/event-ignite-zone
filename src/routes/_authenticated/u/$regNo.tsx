@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/u/$regNo")({
 function ProfilePage() {
   const { regNo } = Route.useParams();
   const { data } = useSuspenseQuery(profileQuery(regNo));
-  const { profile, memberships } = data;
+  const { profile, teams } = data;
   const skills = profile.skills ?? [];
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -35,13 +35,13 @@ function ProfilePage() {
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold">Teams</h2>
         <div className="mt-3 space-y-3">
-          {memberships.map((membership: any, index: number) => (
-            <p key={index} className="rounded-xl border border-border p-4">
-              <span className="font-medium">{membership.teams?.name}</span> ·{" "}
-              {membership.teams?.hackathons?.title}
+          {teams.map((team) => (
+            <p key={team.id} className="rounded-xl border border-border p-4">
+              <span className="font-medium">{team.name}</span>
+              {team.hackathon_title ? ` · ${team.hackathon_title}` : ""}
             </p>
           ))}
-          {memberships.length === 0 && (
+          {teams.length === 0 && (
             <p className="text-sm text-muted-foreground">No public team memberships yet.</p>
           )}
         </div>
