@@ -134,7 +134,12 @@ export const getHackathon = createServerFn({ method: "GET" })
       profiles: profileById.get(l.user_id as string) ?? null,
     }));
 
-    return { hackathon, clashes: clashesRes.data ?? [], teams: shapedTeams, looking: shapedLooking };
+    return {
+      hackathon,
+      clashes: clashesRes.data ?? [],
+      teams: shapedTeams,
+      looking: shapedLooking,
+    };
   });
 
 export const getOrganizers = createServerFn({ method: "GET" }).handler(async () => {
@@ -151,7 +156,9 @@ export const getPublicProfile = createServerFn({ method: "GET" })
     const supabase = createPublicClient();
     const { data: profile, error } = await supabase
       .from("public_profiles")
-      .select("id, full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url")
+      .select(
+        "id, full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url",
+      )
       .eq("reg_number", data.regNumber.toUpperCase())
       .maybeSingle();
     if (error || !profile) throw new Error("Profile not found");
@@ -193,7 +200,7 @@ export const suggestHackathon = createServerFn({ method: "POST" })
         fee: z.string().trim().max(50).default(""),
         website_url: z.string().trim().url().nullish().or(z.literal("")),
       })
-      .parse(d)
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
@@ -214,7 +221,7 @@ export const suggestHackathon = createServerFn({ method: "POST" })
 export const adminCreateHackathon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ hackathon: hackathonInput, fromSuggestionId: z.string().uuid().nullish() }).parse(d)
+    z.object({ hackathon: hackathonInput, fromSuggestionId: z.string().uuid().nullish() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);

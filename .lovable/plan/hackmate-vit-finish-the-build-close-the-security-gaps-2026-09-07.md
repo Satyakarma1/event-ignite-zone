@@ -10,16 +10,16 @@ Database check: 0 users, 0 hackathons, 0 admin accounts — the site is empty, w
 
 ## Findings confirmed against the code
 
-| # | Finding | Status |
-|---|---------|--------|
-| 1 | Missing pages / broken routing | Confirmed — build fails |
-| 2 | Server actions exist with no screens | Confirmed |
-| 3 | Phone + email publicly readable | Confirmed — `profiles` is readable by anyone, all columns |
-| 4 | VIT-only rule bypassable by direct database access | Confirmed |
-| 5 | Team size limit not concurrency-safe | Confirmed |
-| 6 | Approving a suggestion doesn't publish it | Confirmed |
-| 7 | Organizer spotlight can never load | Confirmed — always shows "coming soon" |
-| 8 | No way to become the first admin | Confirmed — no admin exists |
+| #   | Finding                                            | Status                                                    |
+| --- | -------------------------------------------------- | --------------------------------------------------------- |
+| 1   | Missing pages / broken routing                     | Confirmed — build fails                                   |
+| 2   | Server actions exist with no screens               | Confirmed                                                 |
+| 3   | Phone + email publicly readable                    | Confirmed — `profiles` is readable by anyone, all columns |
+| 4   | VIT-only rule bypassable by direct database access | Confirmed                                                 |
+| 5   | Team size limit not concurrency-safe               | Confirmed                                                 |
+| 6   | Approving a suggestion doesn't publish it          | Confirmed                                                 |
+| 7   | Organizer spotlight can never load                 | Confirmed — always shows "coming soon"                    |
+| 8   | No way to become the first admin                   | Confirmed — no admin exists                               |
 
 ## Part A — Make the app work (findings 1 & 2)
 
