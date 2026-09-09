@@ -100,20 +100,32 @@ export const getTeamRequests = createServerFn({ method: "GET" })
 
     const { data: rows } = await context.supabase
       .from("team_memberships")
-      .select("id, status, note, created_at, user_id, profiles(full_name, reg_number, programme)")
+      .select("id, status, note, created_at, user_id")
       .eq("team_id", data.teamId)
       .in("status", ["pending", "waitlisted"])
       .order("created_at", { ascending: true });
 
+    const userIds = (rows ?? []).map((r) => r.user_id);
+    const { data: profiles } = userIds.length
+      ? await context.supabase
+          .from("profiles")
+          .select("id, full_name, reg_number, programme")
+          .in("id", userIds)
+      : { data: [] };
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+
     return {
-      requests: (rows ?? []).map((r) => ({
-        id: r.id as string,
-        status: r.status as string,
-        note: (r.note as string | null) ?? "",
-        full_name: r.profiles?.full_name ?? "Student",
-        reg_number: r.profiles?.reg_number ?? null,
-        programme: r.profiles?.programme ?? null,
-      })),
+      requests: (rows ?? []).map((r) => {
+        const profile = byId.get(r.user_id);
+        return {
+          id: r.id,
+          status: r.status,
+          note: r.note ?? "",
+          full_name: profile?.full_name ?? "Student",
+          reg_number: profile?.reg_number ?? null,
+          programme: profile?.programme ?? null,
+        };
+      }),
     };
   });
 

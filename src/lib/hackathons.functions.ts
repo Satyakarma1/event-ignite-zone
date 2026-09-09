@@ -162,15 +162,22 @@ export const getPublicProfile = createServerFn({ method: "GET" })
       .eq("user_id", profile.id!);
 
     const teamIds = (memberships ?? []).map((m) => m.team_id).filter(Boolean) as string[];
-    const { data: teams } = teamIds.length
-      ? await supabase
-          .from("teams")
-          .select("id, name, hackathons(id, title, starts_at)")
-          .in("id", teamIds)
-      : { data: [] as Array<Record<string, unknown>> };
+    type TeamRow = { id: string; name: string; hackathon_title: string | null };
+    let teams: TeamRow[] = [];
+    if (teamIds.length) {
+      const { data: rows } = await supabase
+        .from("teams")
+        .select("id, name, hackathons(title)")
+        .in("id", teamIds);
+      teams = (rows ?? []).map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        hackathon_title: row.hackathons?.title ?? null,
+      }));
+    }
 
     const { id: _id, ...safeProfile } = profile;
-    return { profile: safeProfile, teams: teams ?? [] };
+    return { profile: safeProfile, teams };
   });
 
 // ---------- user actions ----------
