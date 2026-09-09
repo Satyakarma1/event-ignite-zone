@@ -1,30 +1,27 @@
 # HackMate VIT — Roadmap
 
 ## Part A — Missing screens (unblocks build)
-
-- [ ] /onboarding
-- [ ] /dashboard
-- [ ] /teams/:id (public, with member/creator controls)
-- [ ] /u/:regNo (public profile)
-- [ ] /suggest
-- [ ] /admin
+- [x] /onboarding
+- [x] /dashboard
+- [x] /teams/:id (public members, creator controls, requests & waitlist)
+- [x] /u/:regNo (public profile)
+- [x] /suggest
+- [x] /admin
 
 ## Part B — Privacy & VIT enforcement (DB level)
-
-- [ ] public-safe profiles view (no phone/email)
-- [ ] narrow team_memberships public read
-- [ ] VIT email constraint on writes
-- [ ] reg number format constraint
+- [x] public-safe profiles view (no phone/email)
+- [x] narrow team_memberships public read
+- [x] VIT email constraint on writes
+- [x] reg number format constraint
 
 ## Part C — Correctness
-
-- [ ] atomic join/approve/waitlist swap (row locks)
-- [ ] approve suggestion -> publish hackathon
-- [ ] public organizers view
-- [ ] first-admin provisioning
+- [x] atomic join/approve/waitlist swap (row locks via join_team / decide_membership)
+- [x] approve suggestion -> publish hackathon (admin approve dialog)
+- [x] public organizers view
+- [x] first-admin provisioning (claim_first_admin + dashboard card)
 
 ## Part D — Polish
-
-- [ ] seed sample events
-- [ ] SEO head per route
-- [ ] empty/loading states, mobile pass
+- [ ] seed sample events (waiting on real event details from the organiser)
+- [x] SEO head per route
+- [x] empty/loading states
+- [ ] final mobile pass
