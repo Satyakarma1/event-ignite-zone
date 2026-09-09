@@ -147,6 +147,7 @@ export const getTeamAccess = createServerFn({ method: "GET" })
       memberPhones = (rows ?? []).flatMap((row) => (row.profiles ? [row.profiles] : []));
     }
     return {
+      userId: context.userId,
       myStatus: membership?.status ?? null,
       isCreator,
       whatsapp_link: isMember || isCreator ? team.whatsapp_link : null,
