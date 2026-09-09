@@ -153,10 +153,21 @@ export const getTeamAccess = createServerFn({ method: "GET" })
     if (isMember || isCreator) {
       const { data: rows } = await context.supabase
         .from("team_memberships")
-        .select("profiles(full_name, reg_number, phone)")
+        .select("user_id")
         .eq("team_id", data.teamId)
         .eq("status", "member");
-      memberPhones = (rows ?? []).flatMap((row) => (row.profiles ? [row.profiles] : []));
+      const ids = (rows ?? []).map((row) => row.user_id);
+      if (ids.length) {
+        const { data: profiles } = await context.supabase
+          .from("profiles")
+          .select("full_name, reg_number, phone")
+          .in("id", ids);
+        memberPhones = (profiles ?? []).map((p) => ({
+          full_name: p.full_name,
+          reg_number: p.reg_number,
+          phone: p.phone,
+        }));
+      }
     }
     return {
       userId: context.userId,
@@ -203,7 +214,7 @@ export const setMembershipStatus = createServerFn({ method: "POST" })
     const { data: result, error } = await context.supabase.rpc("decide_membership", {
       _membership_id: data.membershipId,
       _action: data.action === "reject" ? "reject" : "approve",
-      _remove_membership_id: data.removeMembershipId ?? undefined,
+      ...(data.removeMembershipId ? { _remove_membership_id: data.removeMembershipId } : {}),
     });
     if (error) throw new Error(error.message);
     return { ok: true, status: result as string };
