@@ -1,24 +1,65 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { getMyDashboard } from "@/lib/teams.functions";
+import { adminExists, claimFirstAdmin } from "@/lib/hackathons.functions";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const dashboardQuery = queryOptions({ queryKey: ["dashboard"], queryFn: () => getMyDashboard() });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: ({ context }) => context.queryClient.ensureQueryData(dashboardQuery),
-  head: () => ({ meta: [{ title: "My teams — HackMate VIT" }] }),
+  head: () => ({
+    meta: [
+      { title: "My teams — HackMate VIT" },
+      { name: "description", content: "Your hackathon teams, join requests and waitlists." },
+    ],
+  }),
+  errorComponent: ({ error }) => (
+    <div className="mx-auto max-w-xl px-4 py-16 text-center">
+      <h1 className="font-display text-2xl font-bold">Could not load your dashboard</h1>
+      <p className="mt-2 text-muted-foreground">{error.message}</p>
+    </div>
+  ),
+  notFoundComponent: () => <p className="p-12 text-center">Not found.</p>,
   component: DashboardPage,
 });
 
 function DashboardPage() {
   const { data } = useSuspenseQuery(dashboardQuery);
+  const queryClient = useQueryClient();
+  const claim = useServerFn(claimFirstAdmin);
+  const adminCheck = useQuery({ queryKey: ["admin-exists"], queryFn: () => adminExists() });
+
+  async function becomeAdmin() {
+    try {
+      await claim({});
+      toast.success("You are now the site admin.");
+      queryClient.invalidateQueries({ queryKey: ["admin-exists"] });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not claim admin access");
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
       <h1 className="font-display text-3xl font-bold">My dashboard</h1>
       <p className="mt-2 text-muted-foreground">
         Track your teams, requests, and hackathon suggestions.
       </p>
+      {adminCheck.data && !adminCheck.data.exists && (
+        <div className="mt-6 rounded-xl border border-accent/40 bg-accent/5 p-5">
+          <p className="font-semibold">Nobody manages this site yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Take over as the organiser to add events and review student suggestions.
+          </p>
+          <Button className="mt-3" onClick={becomeAdmin}>
+            Make me the organiser
+          </Button>
+        </div>
+      )}
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold">My teams</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">

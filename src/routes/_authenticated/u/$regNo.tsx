@@ -9,6 +9,19 @@ const profileQuery = (regNumber: string) =>
   });
 export const Route = createFileRoute("/_authenticated/u/$regNo")({
   loader: ({ context, params }) => context.queryClient.ensureQueryData(profileQuery(params.regNo)),
+  head: () => ({
+    meta: [
+      { title: "Student profile — HackMate VIT" },
+      { name: "description", content: "Skills, programme and hackathon teams of a VIT student." },
+    ],
+  }),
+  errorComponent: ({ error }) => (
+    <div className="mx-auto max-w-xl px-4 py-16 text-center">
+      <h1 className="font-display text-2xl font-bold">Profile unavailable</h1>
+      <p className="mt-2 text-muted-foreground">{error.message}</p>
+    </div>
+  ),
+  notFoundComponent: () => <p className="p-12 text-center">No student with that number.</p>,
   component: ProfilePage,
 });
 function ProfilePage() {
