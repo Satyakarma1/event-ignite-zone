@@ -36,6 +36,20 @@
       "when": 1789065600000,
       "tag": "0004_owner_capacity_and_strict_vit",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789065601000,
+      "tag": "0005_owner_suggestion_privacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789065602000,
+      "tag": "0006_owner_profile_defaults",
+      "breakpoints": true
     }
   ]
 }

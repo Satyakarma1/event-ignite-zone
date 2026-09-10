@@ -228,10 +228,11 @@ export const adminCreateHackathon = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (data.fromSuggestionId) {
-      await context.supabase
+      const { error: suggestionError } = await context.supabase
         .from("hackathon_suggestions")
         .update({ status: "approved", published_hackathon_id: row.id })
         .eq("id", data.fromSuggestionId);
+      if (suggestionError) throw new Error(suggestionError.message);
     }
     return row;
   });
@@ -266,10 +267,41 @@ export const adminListSuggestions = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
     await assertAdmin(context.supabase, context.userId, context.claims.email as string);
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("hackathon_suggestions")
       .select("*")
       .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const adminListUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    assertVitEmail(context.claims.email as string);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select(
+        "id, full_name, reg_number, programme, skills, email, phone, instagram, linkedin, github, avatar_url, created_at, updated_at",
+      )
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const adminListHackathons = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    assertVitEmail(context.claims.email as string);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("hackathons")
+      .select("*")
+      .order("starts_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
   });
