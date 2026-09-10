@@ -14,6 +14,7 @@ const hackathonInput = z.object({
   website_url: z.string().trim().url().nullish().or(z.literal("")),
   venue: z.string().trim().max(200).nullish(),
   organizer_club: z.string().trim().max(200).nullish(),
+  participant_capacity: z.number().int().min(1).nullish(),
   tags: z.array(z.string().trim().max(40)).max(10).default([]),
 });
 
@@ -30,6 +31,7 @@ function normalizeHackathon(input: HackathonInput) {
     website_url: input.website_url || null,
     venue: input.venue || null,
     organizer_club: input.organizer_club || null,
+    participant_capacity: input.participant_capacity ?? null,
     tags: input.tags,
   };
 }
@@ -142,14 +144,6 @@ export const getHackathon = createServerFn({ method: "GET" })
     };
   });
 
-export const getOrganizers = createServerFn({ method: "GET" }).handler(async () => {
-  const supabase = createPublicClient();
-  const { data } = await supabase
-    .from("public_organizers")
-    .select("full_name, reg_number, programme, skills, instagram, linkedin, github, avatar_url");
-  return data ?? [];
-});
-
 export const getPublicProfile = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ regNumber: z.string().trim().max(20) }).parse(d))
   .handler(async ({ data }) => {
@@ -225,7 +219,7 @@ export const adminCreateHackathon = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { data: row, error } = await context.supabase
       .from("hackathons")
       .insert({ ...normalizeHackathon(data.hackathon), created_by: context.userId })
@@ -247,7 +241,7 @@ export const adminUpdateHackathon = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid(), patch: hackathonInput }).parse(d))
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { error } = await context.supabase
       .from("hackathons")
       .update(normalizeHackathon(data.patch))
@@ -261,7 +255,7 @@ export const adminDeleteHackathon = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { error } = await context.supabase.from("hackathons").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -271,7 +265,7 @@ export const adminListSuggestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { data, error } = await context.supabase
       .from("hackathon_suggestions")
       .select("*")
@@ -285,7 +279,7 @@ export const adminRejectSuggestion = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { error } = await context.supabase
       .from("hackathon_suggestions")
       .update({ status: "rejected" })
@@ -298,12 +292,13 @@ export const adminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [users, hackathons, teams, pending] = await Promise.all([
-      context.supabase.from("profiles").select("id", { count: "exact", head: true }),
-      context.supabase.from("hackathons").select("id", { count: "exact", head: true }),
-      context.supabase.from("teams").select("id", { count: "exact", head: true }),
-      context.supabase
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("hackathons").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("teams").select("id", { count: "exact", head: true }),
+      supabaseAdmin
         .from("hackathon_suggestions")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending"),
@@ -316,29 +311,13 @@ export const adminStats = createServerFn({ method: "GET" })
     };
   });
 
-/** True while nobody holds the admin role — lets the first VIT account claim it. */
-export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
-  const supabase = createPublicClient();
-  const { data } = await supabase.rpc("admin_exists");
-  return { exists: !!data };
-});
-
-export const claimFirstAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    assertVitEmail(context.claims.email as string);
-    const { data, error } = await context.supabase.rpc("claim_first_admin");
-    if (error) throw new Error(error.message);
-    if (!data) throw new Error("An admin already exists — ask them to grant you access.");
-    return { ok: true };
-  });
-
 export const isAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    return { isAdmin: !!data };
+    try {
+      await assertAdmin(context.supabase, context.userId, context.claims.email as string);
+      return { isAdmin: true };
+    } catch {
+      return { isAdmin: false };
+    }
   });

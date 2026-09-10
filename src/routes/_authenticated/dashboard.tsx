@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getMyDashboard, removeLookingForTeam } from "@/lib/teams.functions";
-import { adminExists, claimFirstAdmin } from "@/lib/hackathons.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -31,20 +30,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function DashboardPage() {
   const { data } = useSuspenseQuery(dashboardQuery);
   const queryClient = useQueryClient();
-  const claim = useServerFn(claimFirstAdmin);
   const removeLooking = useServerFn(removeLookingForTeam);
-  const adminCheck = useQuery({ queryKey: ["admin-exists"], queryFn: () => adminExists() });
   const [removingId, setRemovingId] = useState<string | null>(null);
-
-  async function becomeAdmin() {
-    try {
-      await claim({});
-      toast.success("You are now the site admin.");
-      queryClient.invalidateQueries({ queryKey: ["admin-exists"] });
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Could not claim admin access");
-    }
-  }
 
   async function removePost(id: string) {
     if (!window.confirm("Remove this looking-for-team post?")) return;
@@ -66,17 +53,6 @@ function DashboardPage() {
       <p className="mt-2 text-muted-foreground">
         Track your teams, requests, and hackathon suggestions.
       </p>
-      {adminCheck.data && !adminCheck.data.exists && (
-        <div className="mt-6 rounded-xl border border-accent/40 bg-accent/5 p-5">
-          <p className="font-semibold">Nobody manages this site yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Take over as the organiser to add events and review student suggestions.
-          </p>
-          <Button className="mt-3" onClick={becomeAdmin}>
-            Make me the organiser
-          </Button>
-        </div>
-      )}
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold">My teams</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">

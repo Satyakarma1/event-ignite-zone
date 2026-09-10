@@ -30,7 +30,7 @@ export const exportUsersCsv = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("profiles")
@@ -57,7 +57,7 @@ export const exportTeamsCsv = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: teams, error } = await supabaseAdmin
       .from("teams")
@@ -112,7 +112,7 @@ export const exportMembershipsCsv = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: memberships, error } = await supabaseAdmin
       .from("team_memberships")
@@ -165,7 +165,7 @@ export const exportSuggestionsCsv = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     assertVitEmail(context.claims.email as string);
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: suggestions, error } = await supabaseAdmin
       .from("hackathon_suggestions")

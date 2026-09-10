@@ -119,6 +119,12 @@ function HackathonDetail() {
               <ExternalLink className="h-4 w-4" /> Official website
             </a>
           )}
+          {hackathon.participant_capacity && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Users className="h-4 w-4 text-accent" /> Up to {hackathon.participant_capacity}{" "}
+              participants
+            </div>
+          )}
         </div>
         {hackathon.registration_deadline && (
           <p className="mt-3 text-sm text-muted-foreground">
