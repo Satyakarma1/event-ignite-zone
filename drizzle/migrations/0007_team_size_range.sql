@@ -28,3 +28,6 @@ begin
       );
   end if;
 end $$;
+
+-- Make the new columns available immediately to Supabase/PostgREST clients.
+notify pgrst, 'reload schema';
