@@ -3,6 +3,7 @@ import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { isVitEmail } from "@/lib/constants";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -92,6 +93,10 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
 
     if (!data.claims.sub) {
       throw new Error("Unauthorized: No user ID found in token");
+    }
+
+    if (!isVitEmail(typeof data.claims.email === "string" ? data.claims.email : null)) {
+      throw new Error("Only VIT email accounts (@vitstudent.ac.in / @vit.ac.in) are allowed.");
     }
 
     return next({

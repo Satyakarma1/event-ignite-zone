@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
+import { isVitEmail } from "@/lib/constants";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -131,14 +132,37 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    let active = true;
+
+    async function validateSession(session: { user?: { email?: string | null } } | null) {
+      if (!active || !session?.user || isVitEmail(session.user.email)) return true;
+      queryClient.clear();
+      await supabase.auth.signOut();
+      if (active) router.navigate({ to: "/auth", search: { error: "domain" }, replace: true });
+      return false;
+    }
+
+    void supabase.auth.getSession().then(({ data }) => validateSession(data.session));
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        void validateSession(session).then((valid) => {
+          if (valid && active) {
+            router.invalidate();
+            queryClient.invalidateQueries();
+          }
+        });
+        return;
+      }
+      if (event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [router, queryClient]);
 
   return (

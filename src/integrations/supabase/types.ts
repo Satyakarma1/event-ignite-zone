@@ -70,6 +70,7 @@ export type Database = {
           fee: number
           id: string
           organizer_club: string | null
+          participant_capacity: number | null
           registration_deadline: string | null
           starts_at: string
           tags: string[] | null
@@ -85,6 +86,7 @@ export type Database = {
           fee?: number
           id?: string
           organizer_club?: string | null
+          participant_capacity?: number | null
           registration_deadline?: string | null
           starts_at: string
           tags?: string[] | null
@@ -100,6 +102,7 @@ export type Database = {
           fee?: number
           id?: string
           organizer_club?: string | null
+          participant_capacity?: number | null
           registration_deadline?: string | null
           starts_at?: string
           tags?: string[] | null
@@ -186,6 +189,24 @@ export type Database = {
           reg_number?: string | null
           skills?: string[] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_owner: {
+        Row: {
+          id: boolean
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: boolean
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: boolean
+          user_id?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -387,6 +408,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      is_site_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_vit_user: { Args: never; Returns: boolean }
       join_team: { Args: { _note?: string; _team_id: string }; Returns: string }
       shares_team_with: {

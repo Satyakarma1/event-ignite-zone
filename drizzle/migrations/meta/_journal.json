@@ -29,6 +29,13 @@
       "when": 1788884587502,
       "tag": "0003_first_admin_claim",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789065600000,
+      "tag": "0004_owner_capacity_and_strict_vit",
+      "breakpoints": true
     }
   ]
 }

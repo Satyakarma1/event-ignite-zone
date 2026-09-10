@@ -1,21 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { Github, Instagram, Linkedin, ArrowRight, Users, Zap } from "lucide-react";
-import { listHackathons, getOrganizers } from "@/lib/hackathons.functions";
+import { Instagram, Linkedin, ArrowRight, Users, Zap } from "lucide-react";
+import { listHackathons } from "@/lib/hackathons.functions";
 import { HackathonCard } from "@/components/HackathonCard";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { isPast } from "@/lib/format";
 
 const hackathonsQuery = queryOptions({ queryKey: ["hackathons"], queryFn: () => listHackathons() });
-const organizersQuery = queryOptions({ queryKey: ["organizers"], queryFn: () => getOrganizers() });
+const organizer = {
+  full_name: "Pratham Gupta",
+  programme: "2nd year",
+  reg_number: "25BAI0165",
+  instagram: "https://www.instagram.com/prathamgupta581/",
+  linkedin: "https://www.linkedin.com/in/pratham-gupta-180b0a315/",
+};
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) =>
-    Promise.all([
-      context.queryClient.ensureQueryData(hackathonsQuery),
-      context.queryClient.ensureQueryData(organizersQuery),
-    ]),
+  loader: ({ context }) => context.queryClient.ensureQueryData(hackathonsQuery),
   head: () => ({
     meta: [
       { title: "HackMate VIT — Find Hackathon Teammates" },
@@ -38,7 +40,6 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data: hackathons } = useSuspenseQuery(hackathonsQuery);
-  const { data: organizers } = useSuspenseQuery(organizersQuery);
   const upcoming = hackathons.filter((h) => !isPast(h.ends_at, h.starts_at)).slice(0, 6);
 
   return (
@@ -132,72 +133,38 @@ function HomePage() {
           <Users className="h-5 w-5 text-accent" /> Run by
         </h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {organizers.length === 0 && (
-            <p className="text-sm text-muted-foreground">Organizer profile coming soon.</p>
-          )}
-          {organizers.map((o) => (
-            <div
-              key={o.reg_number ?? o.full_name}
-              className="rounded-xl border border-border bg-card p-6"
-            >
-              <div className="flex items-center gap-4">
-                <Avatar className="h-14 w-14">
-                  <AvatarImage src={o.avatar_url ?? undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {(o.full_name || "?").slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-display font-semibold">{o.full_name || "Organizer"}</p>
-                  {o.programme && <p className="text-xs text-muted-foreground">{o.programme}</p>}
-                  {o.reg_number && (
-                    <Link
-                      to="/u/$regNo"
-                      params={{ regNo: o.reg_number }}
-                      className="font-mono text-xs text-accent hover:underline"
-                    >
-                      {o.reg_number}
-                    </Link>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 flex gap-3 text-muted-foreground">
-                {o.instagram && (
-                  <a
-                    href={o.instagram}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Instagram"
-                    className="hover:text-accent"
-                  >
-                    <Instagram className="h-4 w-4" />
-                  </a>
-                )}
-                {o.linkedin && (
-                  <a
-                    href={o.linkedin}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="LinkedIn"
-                    className="hover:text-accent"
-                  >
-                    <Linkedin className="h-4 w-4" />
-                  </a>
-                )}
-                {o.github && (
-                  <a
-                    href={o.github}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="GitHub"
-                    className="hover:text-accent"
-                  >
-                    <Github className="h-4 w-4" />
-                  </a>
-                )}
+          <div className="rounded-xl border border-border bg-card p-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-14 w-14">
+                <AvatarFallback className="bg-primary text-primary-foreground">PG</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-display font-semibold">{organizer.full_name}</p>
+                <p className="text-xs text-muted-foreground">{organizer.programme}</p>
+                <p className="font-mono text-xs text-accent">{organizer.reg_number}</p>
               </div>
             </div>
-          ))}
+            <div className="mt-4 flex gap-3 text-muted-foreground">
+              <a
+                href={organizer.instagram}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+                className="hover:text-accent"
+              >
+                <Instagram className="h-4 w-4" />
+              </a>
+              <a
+                href={organizer.linkedin}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="LinkedIn"
+                className="hover:text-accent"
+              >
+                <Linkedin className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </div>

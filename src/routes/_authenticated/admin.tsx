@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -7,6 +7,7 @@ import {
   adminListSuggestions,
   adminRejectSuggestion,
   adminStats,
+  isAdmin,
 } from "@/lib/hackathons.functions";
 import {
   exportMembershipsCsv,
@@ -36,11 +37,14 @@ const suggestionsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  loader: ({ context }) =>
-    Promise.all([
+  loader: async ({ context }) => {
+    const access = await isAdmin();
+    if (!access.isAdmin) throw redirect({ to: "/dashboard" });
+    return Promise.all([
       context.queryClient.ensureQueryData(statsQuery),
       context.queryClient.ensureQueryData(suggestionsQuery),
-    ]),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: "Admin panel — HackMate VIT" },
@@ -67,6 +71,7 @@ type EventForm = {
   website_url: string;
   venue: string;
   organizer_club: string;
+  participant_capacity: string;
   tags: string;
 };
 
@@ -80,6 +85,7 @@ const emptyEvent: EventForm = {
   website_url: "",
   venue: "",
   organizer_club: "",
+  participant_capacity: "",
   tags: "",
 };
 
@@ -96,6 +102,7 @@ function toPayload(form: EventForm) {
     website_url: form.website_url.trim() || null,
     venue: form.venue.trim() || null,
     organizer_club: form.organizer_club.trim() || null,
+    participant_capacity: form.participant_capacity ? Number(form.participant_capacity) : null,
     tags: form.tags
       .split(",")
       .map((t) => t.trim())
@@ -165,6 +172,18 @@ function EventFields({ form, setForm }: { form: EventForm; setForm: (f: EventFor
           id="club"
           value={form.organizer_club}
           onChange={(e) => setForm({ ...form, organizer_club: e.target.value })}
+        />
+      </div>
+      <div>
+        <Label htmlFor="participant_capacity">Maximum participants (optional)</Label>
+        <Input
+          id="participant_capacity"
+          type="number"
+          min={1}
+          step={1}
+          value={form.participant_capacity}
+          onChange={(e) => setForm({ ...form, participant_capacity: e.target.value })}
+          placeholder="e.g. 500"
         />
       </div>
       <div className="sm:col-span-2">
