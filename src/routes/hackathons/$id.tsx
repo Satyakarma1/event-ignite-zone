@@ -16,6 +16,7 @@ import { getHackathon } from "@/lib/hackathons.functions";
 import { postLookingForTeam } from "@/lib/teams.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDateTime, fmtFee, isPast } from "@/lib/format";
+import { formatTeamSizeRange } from "@/lib/team-size.utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +55,7 @@ function HackathonDetail() {
   const { data } = useSuspenseQuery(detailQuery(id));
   const { hackathon, clashes, teams, looking } = data;
   const past = isPast(hackathon.ends_at, hackathon.starts_at);
+  const teamSize = formatTeamSizeRange(hackathon.min_team_size, hackathon.max_team_size);
   const queryClient = useQueryClient();
   const postLooking = useServerFn(postLookingForTeam);
 
@@ -119,10 +121,9 @@ function HackathonDetail() {
               <ExternalLink className="h-4 w-4" /> Official website
             </a>
           )}
-          {hackathon.participant_capacity && (
+          {teamSize && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="h-4 w-4 text-accent" /> Up to {hackathon.participant_capacity}{" "}
-              participants
+              <Users className="h-4 w-4 text-accent" /> {teamSize}
             </div>
           )}
         </div>
@@ -170,7 +171,11 @@ function HackathonDetail() {
           </h2>
           {!past &&
             (session ? (
-              <CreateTeamDialog hackathonId={id} />
+              <CreateTeamDialog
+                hackathonId={id}
+                minTeamSize={hackathon.min_team_size}
+                maxTeamSize={hackathon.max_team_size}
+              />
             ) : (
               <Button asChild>
                 <Link to="/auth">Sign in to create a team</Link>

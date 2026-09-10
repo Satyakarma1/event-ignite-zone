@@ -50,6 +50,13 @@
       "when": 1789065602000,
       "tag": "0006_owner_profile_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789065603000,
+      "tag": "0007_team_size_range",
+      "breakpoints": true
     }
   ]
 }

@@ -95,7 +95,8 @@ type EventForm = {
   website_url: string;
   venue: string;
   organizer_club: string;
-  participant_capacity: string;
+  min_team_size: string;
+  max_team_size: string;
   tags: string;
 };
 
@@ -109,7 +110,8 @@ const emptyEvent: EventForm = {
   website_url: "",
   venue: "",
   organizer_club: "",
-  participant_capacity: "",
+  min_team_size: "",
+  max_team_size: "",
   tags: "",
 };
 
@@ -127,7 +129,8 @@ function eventToForm(event: {
   website_url: string | null;
   venue: string | null;
   organizer_club: string | null;
-  participant_capacity: number | null;
+  min_team_size: number | null;
+  max_team_size: number | null;
   tags: string[] | null;
 }): EventForm {
   return {
@@ -140,7 +143,8 @@ function eventToForm(event: {
     website_url: event.website_url ?? "",
     venue: event.venue ?? "",
     organizer_club: event.organizer_club ?? "",
-    participant_capacity: event.participant_capacity ? String(event.participant_capacity) : "",
+    min_team_size: event.min_team_size ? String(event.min_team_size) : "",
+    max_team_size: event.max_team_size ? String(event.max_team_size) : "",
     tags: (event.tags ?? []).join(", "),
   };
 }
@@ -158,7 +162,8 @@ function toPayload(form: EventForm) {
     website_url: form.website_url.trim() || null,
     venue: form.venue.trim() || null,
     organizer_club: form.organizer_club.trim() || null,
-    participant_capacity: form.participant_capacity ? Number(form.participant_capacity) : null,
+    min_team_size: form.min_team_size ? Number(form.min_team_size) : null,
+    max_team_size: form.max_team_size ? Number(form.max_team_size) : null,
     tags: form.tags
       .split(",")
       .map((tag) => tag.trim())
@@ -231,17 +236,34 @@ function EventFields({ form, setForm }: { form: EventForm; setForm: (f: EventFor
         />
       </div>
       <div>
-        <Label htmlFor="participant_capacity">Maximum participants (optional)</Label>
+        <Label htmlFor="min_team_size">Minimum team size (optional)</Label>
         <Input
-          id="participant_capacity"
+          id="min_team_size"
           type="number"
           min={1}
+          max={10}
           step={1}
-          value={form.participant_capacity}
-          onChange={(e) => setForm({ ...form, participant_capacity: e.target.value })}
-          placeholder="e.g. 500"
+          value={form.min_team_size}
+          onChange={(e) => setForm({ ...form, min_team_size: e.target.value })}
+          placeholder="e.g. 2"
         />
       </div>
+      <div>
+        <Label htmlFor="max_team_size">Maximum team size (optional)</Label>
+        <Input
+          id="max_team_size"
+          type="number"
+          min={1}
+          max={10}
+          step={1}
+          value={form.max_team_size}
+          onChange={(e) => setForm({ ...form, max_team_size: e.target.value })}
+          placeholder="e.g. 5"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">
+        This controls the number of members allowed in each team, not total hackathon attendance.
+      </p>
       <div className="sm:col-span-2">
         <Label htmlFor="website">Official link</Label>
         <Input
@@ -586,7 +608,7 @@ function AdminPage() {
                     <TableHead>Event</TableHead>
                     <TableHead>Starts</TableHead>
                     <TableHead>Fee</TableHead>
-                    <TableHead>Capacity</TableHead>
+                    <TableHead>Team size</TableHead>
                     <TableHead>Venue / club</TableHead>
                     <TableHead />
                   </TableRow>
@@ -597,7 +619,11 @@ function AdminPage() {
                       <TableCell className="font-medium">{hackathon.title}</TableCell>
                       <TableCell>{fmtDateTime(hackathon.starts_at)}</TableCell>
                       <TableCell>₹{hackathon.fee}</TableCell>
-                      <TableCell>{hackathon.participant_capacity ?? "—"}</TableCell>
+                      <TableCell>
+                        {hackathon.min_team_size && hackathon.max_team_size
+                          ? `${hackathon.min_team_size}–${hackathon.max_team_size}`
+                          : "—"}
+                      </TableCell>
                       <TableCell>{hackathon.venue || hackathon.organizer_club || "—"}</TableCell>
                       <TableCell>
                         <Button

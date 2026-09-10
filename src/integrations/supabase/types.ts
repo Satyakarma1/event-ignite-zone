@@ -69,6 +69,8 @@ export type Database = {
           ends_at: string | null
           fee: number
           id: string
+          max_team_size: number | null
+          min_team_size: number | null
           organizer_club: string | null
           participant_capacity: number | null
           registration_deadline: string | null
@@ -85,6 +87,8 @@ export type Database = {
           ends_at?: string | null
           fee?: number
           id?: string
+          max_team_size?: number | null
+          min_team_size?: number | null
           organizer_club?: string | null
           participant_capacity?: number | null
           registration_deadline?: string | null
@@ -101,6 +105,8 @@ export type Database = {
           ends_at?: string | null
           fee?: number
           id?: string
+          max_team_size?: number | null
+          min_team_size?: number | null
           organizer_club?: string | null
           participant_capacity?: number | null
           registration_deadline?: string | null
