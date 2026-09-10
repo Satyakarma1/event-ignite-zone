@@ -2,22 +2,24 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Instagram, Linkedin, ArrowRight, Users, Zap } from "lucide-react";
 import { listHackathons } from "@/lib/hackathons.functions";
+import { getPublicOrganizer } from "@/lib/profiles.functions";
 import { HackathonCard } from "@/components/HackathonCard";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { isPast } from "@/lib/format";
 
 const hackathonsQuery = queryOptions({ queryKey: ["hackathons"], queryFn: () => listHackathons() });
-const organizer = {
-  full_name: "Pratham Gupta",
-  programme: "2nd year",
-  reg_number: "25BAI0165",
-  instagram: "https://www.instagram.com/prathamgupta581/",
-  linkedin: "https://www.linkedin.com/in/pratham-gupta-180b0a315/",
-};
+const organizerQuery = queryOptions({
+  queryKey: ["public-organizer"],
+  queryFn: () => getPublicOrganizer(),
+});
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(hackathonsQuery),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(hackathonsQuery),
+      context.queryClient.ensureQueryData(organizerQuery),
+    ]),
   head: () => ({
     meta: [
       { title: "HackMate VIT — Find Hackathon Teammates" },
@@ -40,6 +42,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data: hackathons } = useSuspenseQuery(hackathonsQuery);
+  const { data: organizer } = useSuspenseQuery(organizerQuery);
   const upcoming = hackathons.filter((h) => !isPast(h.ends_at, h.starts_at)).slice(0, 6);
 
   return (
@@ -133,38 +136,40 @@ function HomePage() {
           <Users className="h-5 w-5 text-accent" /> Run by
         </h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-14 w-14">
-                <AvatarFallback className="bg-primary text-primary-foreground">PG</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-display font-semibold">{organizer.full_name}</p>
-                <p className="text-xs text-muted-foreground">{organizer.programme}</p>
-                <p className="font-mono text-xs text-accent">{organizer.reg_number}</p>
+          {organizer && (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-14 w-14">
+                  <AvatarFallback className="bg-primary text-primary-foreground">PG</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-display font-semibold">{organizer.full_name}</p>
+                  <p className="text-xs text-muted-foreground">{organizer.programme}</p>
+                  <p className="font-mono text-xs text-accent">{organizer.reg_number}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-3 text-muted-foreground">
+                <a
+                  href={organizer.instagram ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="hover:text-accent"
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a
+                  href={organizer.linkedin ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="LinkedIn"
+                  className="hover:text-accent"
+                >
+                  <Linkedin className="h-4 w-4" />
+                </a>
               </div>
             </div>
-            <div className="mt-4 flex gap-3 text-muted-foreground">
-              <a
-                href={organizer.instagram}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-                className="hover:text-accent"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a
-                href={organizer.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="LinkedIn"
-                className="hover:text-accent"
-              >
-                <Linkedin className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
+          )}
         </div>
       </section>
     </div>
