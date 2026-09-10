@@ -2,11 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { CalendarDays, IndianRupee, MapPin, ArrowUpRight, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fmtDate, fmtFee, isPast, daysUntil } from "@/lib/format";
+import { formatTeamSizeRange } from "@/lib/team-size.utils";
 import type { Tables } from "@/integrations/supabase/types";
 
 export function HackathonCard({ hackathon }: { hackathon: Tables<"hackathons"> }) {
   const past = isPast(hackathon.ends_at, hackathon.starts_at);
   const days = daysUntil(hackathon.starts_at);
+  const teamSize = formatTeamSizeRange(hackathon.min_team_size, hackathon.max_team_size);
 
   return (
     <Link
@@ -35,9 +37,9 @@ export function HackathonCard({ hackathon }: { hackathon: Tables<"hackathons"> }
             <MapPin className="h-3.5 w-3.5" /> {hackathon.venue}
           </span>
         )}
-        {hackathon.participant_capacity && (
+        {teamSize && (
           <span className="inline-flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" /> Up to {hackathon.participant_capacity}
+            <Users className="h-3.5 w-3.5" /> {teamSize}
           </span>
         )}
       </div>

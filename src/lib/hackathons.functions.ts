@@ -3,20 +3,27 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createPublicClient } from "./public.server";
 import { assertAdmin, assertVitEmail } from "./authz.server";
+import { teamSizeRangeError } from "./team-size.utils";
 
-const hackathonInput = z.object({
-  title: z.string().trim().min(2).max(200),
-  description: z.string().trim().max(5000).default(""),
-  starts_at: z.string().min(4),
-  ends_at: z.string().nullish(),
-  registration_deadline: z.string().nullish(),
-  fee: z.number().int().min(0).default(0),
-  website_url: z.string().trim().url().nullish().or(z.literal("")),
-  venue: z.string().trim().max(200).nullish(),
-  organizer_club: z.string().trim().max(200).nullish(),
-  participant_capacity: z.number().int().min(1).nullish(),
-  tags: z.array(z.string().trim().max(40)).max(10).default([]),
-});
+const hackathonInput = z
+  .object({
+    title: z.string().trim().min(2).max(200),
+    description: z.string().trim().max(5000).default(""),
+    starts_at: z.string().min(4),
+    ends_at: z.string().nullish(),
+    registration_deadline: z.string().nullish(),
+    fee: z.number().int().min(0).default(0),
+    website_url: z.string().trim().url().nullish().or(z.literal("")),
+    venue: z.string().trim().max(200).nullish(),
+    organizer_club: z.string().trim().max(200).nullish(),
+    min_team_size: z.number().int().min(1).max(10).nullish(),
+    max_team_size: z.number().int().min(1).max(10).nullish(),
+    tags: z.array(z.string().trim().max(40)).max(10).default([]),
+  })
+  .superRefine((input, ctx) => {
+    const error = teamSizeRangeError(input.min_team_size, input.max_team_size);
+    if (error) ctx.addIssue({ code: "custom", path: ["max_team_size"], message: error });
+  });
 
 type HackathonInput = z.infer<typeof hackathonInput>;
 
@@ -31,7 +38,8 @@ function normalizeHackathon(input: HackathonInput) {
     website_url: input.website_url || null,
     venue: input.venue || null,
     organizer_club: input.organizer_club || null,
-    participant_capacity: input.participant_capacity ?? null,
+    min_team_size: input.min_team_size ?? null,
+    max_team_size: input.max_team_size ?? null,
     tags: input.tags,
   };
 }

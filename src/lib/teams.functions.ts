@@ -5,11 +5,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createPublicClient } from "./public.server";
 import { assertVitEmail } from "./authz.server";
+import { teamSizeLimitError } from "./team-size.utils";
 
 async function getHackathonLock(supabase: SupabaseClient<Database>, hackathonId: string) {
   const { data } = await supabase
     .from("hackathons")
-    .select("starts_at, ends_at")
+    .select("starts_at, ends_at, min_team_size, max_team_size")
     .eq("id", hackathonId)
     .single();
   if (!data) throw new Error("Hackathon not found");
@@ -17,6 +18,7 @@ async function getHackathonLock(supabase: SupabaseClient<Database>, hackathonId:
   if (new Date(end).getTime() < Date.now()) {
     throw new Error("This hackathon has already happened — teams are locked.");
   }
+  return data;
 }
 
 export const createTeam = createServerFn({ method: "POST" })
@@ -35,7 +37,13 @@ export const createTeam = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    await getHackathonLock(context.supabase, data.hackathon_id);
+    const hackathon = await getHackathonLock(context.supabase, data.hackathon_id);
+    const teamSizeError = teamSizeLimitError(
+      data.max_size,
+      hackathon.min_team_size,
+      hackathon.max_team_size,
+    );
+    if (teamSizeError) throw new Error(teamSizeError);
     const { data: team, error } = await context.supabase
       .from("teams")
       .insert({
@@ -292,6 +300,20 @@ export const updateTeam = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
     const { teamId, ...patch } = data;
+    const { data: team } = await context.supabase
+      .from("teams")
+      .select("hackathon_id")
+      .eq("id", teamId)
+      .eq("creator_id", context.userId)
+      .single();
+    if (!team) throw new Error("Team not found");
+    const hackathon = await getHackathonLock(context.supabase, team.hackathon_id);
+    const teamSizeError = teamSizeLimitError(
+      data.max_size,
+      hackathon.min_team_size,
+      hackathon.max_team_size,
+    );
+    if (teamSizeError) throw new Error(teamSizeError);
     const { error } = await context.supabase
       .from("teams")
       .update({ ...patch, whatsapp_link: patch.whatsapp_link || null })

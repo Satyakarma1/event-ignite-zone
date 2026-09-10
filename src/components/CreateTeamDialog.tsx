@@ -16,7 +16,15 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
+export function CreateTeamDialog({
+  hackathonId,
+  minTeamSize,
+  maxTeamSize,
+}: {
+  hackathonId: string;
+  minTeamSize: number | null;
+  maxTeamSize: number | null;
+}) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
@@ -24,7 +32,7 @@ export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    max_size: 4,
+    max_size: Math.max(minTeamSize ?? 1, Math.min(maxTeamSize ?? 4, 10)),
     needed_roles: "",
     whatsapp_link: "",
   });
@@ -96,11 +104,16 @@ export function CreateTeamDialog({ hackathonId }: { hackathonId: string }) {
             <Input
               id="team-size"
               type="number"
-              min={1}
-              max={10}
+              min={minTeamSize ?? 1}
+              max={maxTeamSize ?? 10}
               value={form.max_size}
               onChange={(e) => setForm({ ...form, max_size: Number(e.target.value) || 4 })}
             />
+            {(minTeamSize || maxTeamSize) && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                This hackathon allows teams of {minTeamSize ?? 1}–{maxTeamSize ?? 10} members.
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="team-roles">Roles needed (comma separated)</Label>
