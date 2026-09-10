@@ -27,6 +27,7 @@ function AuthPage() {
         if (!isVitEmail(session.user.email)) {
           await supabase.auth.signOut();
           toast.error("Only VIT email accounts (@vitstudent.ac.in / @vit.ac.in) are allowed.");
+          navigate({ to: "/auth", search: { error: "domain" }, replace: true });
           return;
         }
         navigate({ to: "/dashboard" });

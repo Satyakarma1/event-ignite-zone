@@ -10,7 +10,7 @@ function escapeCsv(value: unknown): string {
   return str;
 }
 
-function toCsv(headers: string[], rows: Record<string, unknown>[]): string {
+export function toCsv(headers: string[], rows: Record<string, unknown>[]): string {
   const lines = [headers.map(escapeCsv).join(",")];
   for (const row of rows) {
     lines.push(headers.map((h) => escapeCsv(row[h])).join(","));
@@ -137,7 +137,10 @@ export const exportMembershipsCsv = createServerFn({ method: "GET" })
     }
 
     if (teamIds.length) {
-      const { data: teams } = await supabaseAdmin.from("teams").select("id, name").in("id", teamIds);
+      const { data: teams } = await supabaseAdmin
+        .from("teams")
+        .select("id, name")
+        .in("id", teamIds);
       for (const t of teams ?? []) {
         teamMap.set(t.id, { name: t.name });
       }
@@ -192,8 +195,10 @@ export const exportSuggestionsCsv = createServerFn({ method: "GET" })
       fee: s.fee,
       website_url: s.website_url,
       status: s.status,
-      suggested_by_reg_number: s.suggested_by ? profileMap.get(s.suggested_by)?.reg_number ?? "" : "",
-      suggested_by_name: s.suggested_by ? profileMap.get(s.suggested_by)?.full_name ?? "" : "",
+      suggested_by_reg_number: s.suggested_by
+        ? (profileMap.get(s.suggested_by)?.reg_number ?? "")
+        : "",
+      suggested_by_name: s.suggested_by ? (profileMap.get(s.suggested_by)?.full_name ?? "") : "",
       created_at: s.created_at,
     }));
     return toCsv(

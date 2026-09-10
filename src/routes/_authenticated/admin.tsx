@@ -203,12 +203,34 @@ function AdminPage() {
   const queryClient = useQueryClient();
   const createHackathon = useServerFn(adminCreateHackathon);
   const rejectSuggestion = useServerFn(adminRejectSuggestion);
+  const downloadUsers = useServerFn(exportUsersCsv);
+  const downloadTeams = useServerFn(exportTeamsCsv);
+  const downloadMemberships = useServerFn(exportMembershipsCsv);
+  const downloadSuggestions = useServerFn(exportSuggestionsCsv);
 
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState<EventForm>(emptyEvent);
   const [approveId, setApproveId] = useState<string | null>(null);
   const [approveForm, setApproveForm] = useState<EventForm>(emptyEvent);
   const [busy, setBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState<string | null>(null);
+
+  const exportActions = [
+    { key: "users", label: "Users", filename: "hackmate-users.csv", run: downloadUsers },
+    { key: "teams", label: "Teams", filename: "hackmate-teams.csv", run: downloadTeams },
+    {
+      key: "memberships",
+      label: "Memberships",
+      filename: "hackmate-memberships.csv",
+      run: downloadMemberships,
+    },
+    {
+      key: "suggestions",
+      label: "Suggestions",
+      filename: "hackmate-suggestions.csv",
+      run: downloadSuggestions,
+    },
+  ];
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["admin-suggestions"] });
@@ -246,6 +268,32 @@ function AdminPage() {
     }
   }
 
+  async function downloadExport(key: string, filename: string, run: () => Promise<string>) {
+    setExportBusy(key);
+    try {
+      downloadTextFile(filename, await run(), "text/csv;charset=utf-8");
+      toast.success(`${filename} downloaded.`);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not export data");
+    } finally {
+      setExportBusy(null);
+    }
+  }
+
+  async function downloadAllExports() {
+    setExportBusy("all");
+    try {
+      for (const exportAction of exportActions) {
+        downloadTextFile(exportAction.filename, await exportAction.run(), "text/csv;charset=utf-8");
+      }
+      toast.success("All CSV files downloaded.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not export all data");
+    } finally {
+      setExportBusy(null);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -279,6 +327,34 @@ function AdminPage() {
           </div>
         ))}
       </div>
+
+      <section className="mt-10 rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-semibold">Exports</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Admin-only CSV downloads. User exports include contact details.
+            </p>
+          </div>
+          <Button variant="outline" disabled={exportBusy !== null} onClick={downloadAllExports}>
+            {exportBusy === "all" ? "Downloading…" : "Download all CSVs"}
+          </Button>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {exportActions.map((exportAction) => (
+            <Button
+              key={exportAction.key}
+              variant="secondary"
+              disabled={exportBusy !== null}
+              onClick={() =>
+                downloadExport(exportAction.key, exportAction.filename, exportAction.run)
+              }
+            >
+              {exportBusy === exportAction.key ? "Downloading…" : `Download ${exportAction.label}`}
+            </Button>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-10">
         <h2 className="font-display text-xl font-semibold">Hackathon suggestions</h2>
