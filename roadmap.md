@@ -28,4 +28,4 @@
 - [ ] seed sample events (waiting on real event details from the organiser)
 - [x] SEO head per route
 - [x] empty/loading states
-- [ ] final mobile pass
+- [x] final mobile pass
