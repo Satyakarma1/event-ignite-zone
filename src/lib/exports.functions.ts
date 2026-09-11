@@ -1,22 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin, assertVitEmail } from "./authz.server";
-
-function escapeCsv(value: unknown): string {
-  const str = String(value ?? "");
-  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-
-export function toCsv(headers: string[], rows: Record<string, unknown>[]): string {
-  const lines = [headers.map(escapeCsv).join(",")];
-  for (const row of rows) {
-    lines.push(headers.map((h) => escapeCsv(row[h])).join(","));
-  }
-  return lines.join("\n");
-}
+import { toCsv } from "./csv.utils";
 
 function hackathonTitle(hackathons: unknown): string | null {
   if (!hackathons) return null;

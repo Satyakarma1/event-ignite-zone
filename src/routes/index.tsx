@@ -14,6 +14,15 @@ const organizerQuery = queryOptions({
   queryFn: () => getPublicOrganizer(),
 });
 
+function getInitials(name: string | null | undefined): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
 export const Route = createFileRoute("/")({
   loader: ({ context }) =>
     Promise.all([
@@ -140,7 +149,9 @@ function HomePage() {
             <div className="rounded-xl border border-border bg-card p-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-14 w-14">
-                  <AvatarFallback className="bg-primary text-primary-foreground">PG</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getInitials(organizer.full_name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-display font-semibold">{organizer.full_name}</p>

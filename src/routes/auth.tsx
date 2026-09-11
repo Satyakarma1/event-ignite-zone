@@ -40,7 +40,10 @@ function AuthPage() {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
-      extraParams: { prompt: "select_account" },
+      // hd:"*" asks Google to show only hosted-domain (Workspace) accounts in the
+      // picker, hiding personal @gmail. This is a UX hint only — VIT membership is
+      // still enforced server-side (requireSupabaseAuth) and on sign-in below.
+      extraParams: { prompt: "select_account", hd: "*" },
     });
     if (result.error) {
       toast.error("Sign-in failed. Please try again.");
