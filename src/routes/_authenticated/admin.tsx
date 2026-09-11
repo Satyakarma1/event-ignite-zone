@@ -18,6 +18,7 @@ import {
   exportTeamsCsv,
   exportUsersCsv,
 } from "@/lib/exports.functions";
+import { adminDeleteTeam, adminListTeams } from "@/lib/teams.functions";
 import { getMyProfile, updateProfile } from "@/lib/profiles.functions";
 import { downloadTextFile } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/format";
@@ -43,6 +44,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 const statsQuery = queryOptions({ queryKey: ["admin-stats"], queryFn: () => adminStats() });
@@ -55,6 +66,7 @@ const hackathonsQuery = queryOptions({
   queryKey: ["admin-hackathons"],
   queryFn: () => adminListHackathons(),
 });
+const teamsQuery = queryOptions({ queryKey: ["admin-teams"], queryFn: () => adminListTeams() });
 const profileQuery = queryOptions({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -66,6 +78,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
       context.queryClient.ensureQueryData(suggestionsQuery),
       context.queryClient.ensureQueryData(usersQuery),
       context.queryClient.ensureQueryData(hackathonsQuery),
+      context.queryClient.ensureQueryData(teamsQuery),
       context.queryClient.ensureQueryData(profileQuery),
     ]);
   },
@@ -302,11 +315,13 @@ function AdminPage() {
   const { data: suggestions } = useSuspenseQuery(suggestionsQuery);
   const { data: users } = useSuspenseQuery(usersQuery);
   const { data: hackathons } = useSuspenseQuery(hackathonsQuery);
+  const { data: teams } = useSuspenseQuery(teamsQuery);
   const { data: profileData } = useSuspenseQuery(profileQuery);
   const queryClient = useQueryClient();
   const createHackathon = useServerFn(adminCreateHackathon);
   const updateHackathon = useServerFn(adminUpdateHackathon);
   const rejectSuggestion = useServerFn(adminRejectSuggestion);
+  const deleteTeamFn = useServerFn(adminDeleteTeam);
   const saveProfile = useServerFn(updateProfile);
   const downloadUsers = useServerFn(exportUsersCsv);
   const downloadTeams = useServerFn(exportTeamsCsv);
@@ -325,6 +340,7 @@ function AdminPage() {
   const [busy, setBusy] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
   const [exportBusy, setExportBusy] = useState<string | null>(null);
+  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
 
   const exportActions = [
     { key: "users", label: "Users", filename: "hackmate-users.csv", run: downloadUsers },
@@ -348,6 +364,7 @@ function AdminPage() {
     queryClient.invalidateQueries({ queryKey: ["admin-suggestions"] });
     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     queryClient.invalidateQueries({ queryKey: ["admin-hackathons"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-teams"] });
     queryClient.invalidateQueries({ queryKey: ["hackathons"] });
   }
 
@@ -396,6 +413,21 @@ function AdminPage() {
       refresh();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Could not update the suggestion");
+    }
+  }
+
+  async function removeTeam(teamId: string) {
+    setBusy(true);
+    try {
+      await deleteTeamFn({ data: { teamId } });
+      toast.success("Team deleted.");
+      setDeleteTeamId(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-teams"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not delete the team");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -537,6 +569,7 @@ function AdminPage() {
         <TabsList className="flex w-full justify-start overflow-x-auto">
           <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
           <TabsTrigger value="hackathons">Hackathons ({hackathons.length})</TabsTrigger>
+          <TabsTrigger value="teams">Teams ({teams.length})</TabsTrigger>
           <TabsTrigger value="suggestions">Suggestions ({suggestions.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="users">
@@ -643,6 +676,93 @@ function AdminPage() {
                     <TableRow>
                       <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                         No hackathons yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </section>
+        </TabsContent>
+        <TabsContent value="teams">
+          <section className="rounded-xl border border-border bg-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-semibold">Teams</h2>
+                <p className="text-sm text-muted-foreground">
+                  Every team with its leader and full roster. Deleting a team also removes its
+                  members and join requests.
+                </p>
+              </div>
+              <Button variant="outline" onClick={refresh}>
+                Refresh
+              </Button>
+            </div>
+            <div className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Team</TableHead>
+                    <TableHead>Hackathon</TableHead>
+                    <TableHead>Leader</TableHead>
+                    <TableHead>Members</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {teams.map((team) => {
+                    const confirmed = team.members.filter((m) => m.status === "member").length;
+                    return (
+                      <TableRow key={team.id}>
+                        <TableCell className="align-top font-medium">{team.name}</TableCell>
+                        <TableCell className="align-top">{team.hackathon_title || "—"}</TableCell>
+                        <TableCell className="align-top">
+                          <div>{team.creator.full_name || "Unknown"}</div>
+                          <div className="font-mono text-xs text-muted-foreground">
+                            {team.creator.reg_number || "—"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <div className="text-xs text-muted-foreground">
+                            {confirmed}/{team.max_size} confirmed
+                          </div>
+                          <ul className="mt-1 space-y-0.5 text-sm">
+                            {team.members.map((member) => (
+                              <li key={member.id}>
+                                {member.full_name || "Student"}
+                                {member.reg_number && (
+                                  <span className="ml-1 font-mono text-xs text-muted-foreground">
+                                    {member.reg_number}
+                                  </span>
+                                )}
+                                {member.status !== "member" && (
+                                  <Badge variant="outline" className="ml-1 text-[10px]">
+                                    {member.status}
+                                  </Badge>
+                                )}
+                              </li>
+                            ))}
+                            {team.members.length === 0 && (
+                              <li className="text-muted-foreground">No members.</li>
+                            )}
+                          </ul>
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setDeleteTeamId(team.id)}
+                          >
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {teams.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                        No teams yet.
                       </TableCell>
                     </TableRow>
                   )}
@@ -774,6 +894,30 @@ function AdminPage() {
           </Button>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!deleteTeamId} onOpenChange={(open) => !open && setDeleteTeamId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this team?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the team, its members and all join requests. This cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={busy}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteTeamId) removeTeam(deleteTeamId);
+              }}
+            >
+              {busy ? "Deleting…" : "Delete team"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

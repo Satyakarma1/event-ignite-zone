@@ -4,7 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createPublicClient } from "./public.server";
-import { assertVitEmail } from "./authz.server";
+import { assertAdmin, assertVitEmail } from "./authz.server";
 import { teamSizeLimitError } from "./team-size.utils";
 
 async function getHackathonLock(supabase: SupabaseClient<Database>, hackathonId: string) {
@@ -274,12 +274,15 @@ export const deleteTeam = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ teamId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     assertVitEmail(context.claims.email as string);
-    const { error } = await context.supabase
+    const { data: deleted, error } = await context.supabase
       .from("teams")
       .delete()
       .eq("id", data.teamId)
-      .eq("creator_id", context.userId);
+      .eq("creator_id", context.userId)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!deleted?.length)
+      throw new Error("You can only delete a team you created (or it no longer exists).");
     return { ok: true };
   });
 
@@ -401,5 +404,136 @@ export const removeLookingForTeam = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------- admin ----------
+
+/** Embedded to-one relations come back as an object or a single-element array
+ * depending on the query planner — normalise either to the title string. */
+function embeddedTitle(hackathons: unknown): string | null {
+  if (!hackathons) return null;
+  if (Array.isArray(hackathons)) return hackathons[0]?.title ?? null;
+  return (hackathons as { title?: string | null }).title ?? null;
+}
+
+/** Owner-only: every team with its leader and full roster (all membership
+ * statuses), for the admin dashboard. Uses the service-role client, so it must
+ * enforce assertAdmin. */
+export const adminListTeams = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    assertVitEmail(context.claims.email as string);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: teams, error } = await supabaseAdmin
+      .from("teams")
+      .select(
+        "id, name, description, max_size, needed_roles, creator_id, created_at, hackathon_id, hackathons(title)",
+      )
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const teamIds = (teams ?? []).map((t) => t.id);
+    const memberships = teamIds.length
+      ? ((
+          await supabaseAdmin
+            .from("team_memberships")
+            .select("id, team_id, user_id, status, created_at")
+            .in("team_id", teamIds)
+            .order("created_at", { ascending: true })
+        ).data ?? [])
+      : [];
+
+    const userIds = Array.from(
+      new Set(
+        [...(teams ?? []).map((t) => t.creator_id), ...memberships.map((m) => m.user_id)].filter(
+          Boolean,
+        ),
+      ),
+    ) as string[];
+
+    const profileMap = new Map<
+      string,
+      { full_name: string | null; reg_number: string | null; programme: string | null }
+    >();
+    if (userIds.length) {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, reg_number, programme")
+        .in("id", userIds);
+      for (const p of profiles ?? []) {
+        profileMap.set(p.id, {
+          full_name: p.full_name,
+          reg_number: p.reg_number,
+          programme: p.programme,
+        });
+      }
+    }
+
+    const membersByTeam = new Map<
+      string,
+      Array<{
+        id: string;
+        user_id: string;
+        status: string;
+        full_name: string | null;
+        reg_number: string | null;
+        programme: string | null;
+      }>
+    >();
+    for (const m of memberships) {
+      const profile = profileMap.get(m.user_id);
+      const list = membersByTeam.get(m.team_id) ?? [];
+      list.push({
+        id: m.id,
+        user_id: m.user_id,
+        status: m.status,
+        full_name: profile?.full_name ?? null,
+        reg_number: profile?.reg_number ?? null,
+        programme: profile?.programme ?? null,
+      });
+      membersByTeam.set(m.team_id, list);
+    }
+
+    return (teams ?? []).map((t) => {
+      const creator = t.creator_id ? profileMap.get(t.creator_id) : undefined;
+      return {
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        max_size: t.max_size,
+        needed_roles: t.needed_roles ?? [],
+        created_at: t.created_at,
+        hackathon_id: t.hackathon_id,
+        hackathon_title: embeddedTitle(t.hackathons),
+        creator: {
+          user_id: t.creator_id,
+          full_name: creator?.full_name ?? null,
+          reg_number: creator?.reg_number ?? null,
+        },
+        members: membersByTeam.get(t.id) ?? [],
+      };
+    });
+  });
+
+/** Owner-only: delete any team (cascades to its memberships). Uses the
+ * service-role client to bypass the creator-scoped RLS delete policy, so it
+ * must enforce assertAdmin. */
+export const adminDeleteTeam = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ teamId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    assertVitEmail(context.claims.email as string);
+    await assertAdmin(context.supabase, context.userId, context.claims.email as string);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: deleted, error } = await supabaseAdmin
+      .from("teams")
+      .delete()
+      .eq("id", data.teamId)
+      .select("id");
+    if (error) throw new Error(error.message);
+    if (!deleted?.length) throw new Error("Team not found (it may already be deleted).");
     return { ok: true };
   });
