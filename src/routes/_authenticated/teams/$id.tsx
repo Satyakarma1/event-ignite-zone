@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
+  deleteTeam,
   getTeam,
   getTeamAccess,
   getTeamRequests,
@@ -14,6 +15,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 const teamQuery = (id: string) =>
@@ -41,10 +53,12 @@ function TeamPage() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(teamQuery(id));
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const join = useServerFn(requestJoin);
   const decide = useServerFn(setMembershipStatus);
   const kick = useServerFn(kickMember);
   const leave = useServerFn(leaveTeam);
+  const del = useServerFn(deleteTeam);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -63,6 +77,11 @@ function TeamPage() {
   const members = data.members;
   const full = members.length >= data.team.max_size;
   const neededRoles = data.team.needed_roles ?? [];
+  const creatorId = data.team.creator_id;
+  const leader = members.find((m) => m.user_id === creatorId) ?? null;
+  const sortedMembers = [...members].sort(
+    (a, b) => (a.user_id === creatorId ? 0 : 1) - (b.user_id === creatorId ? 0 : 1),
+  );
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["team", id] });
@@ -100,6 +119,24 @@ function TeamPage() {
     }
   }
 
+  async function handleDelete() {
+    setBusy(true);
+    try {
+      await del({ data: { teamId: id } });
+      toast.success("Team deleted.");
+      // Don't invalidate ["team", id] — the route would refetch the deleted team
+      // and flash its errorComponent before we navigate away.
+      queryClient.removeQueries({ queryKey: ["team", id] });
+      queryClient.invalidateQueries({ queryKey: ["hackathon", data.team.hackathon_id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["hackathons"] });
+      navigate({ to: "/hackathons/$id", params: { id: data.team.hackathon_id } });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Could not delete the team");
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <Link
@@ -120,38 +157,75 @@ function TeamPage() {
         {neededRoles.length > 0 && (
           <p className="mt-2 text-sm">Looking for: {neededRoles.join(", ")}</p>
         )}
+        {leader && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/40 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">Led by</span>
+            <span className="font-medium">{leader.full_name}</span>
+            {leader.reg_number && (
+              <Link
+                to="/u/$regNo"
+                params={{ regNo: leader.reg_number }}
+                className="font-mono text-xs text-accent hover:underline"
+              >
+                {leader.reg_number}
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold">Members</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {members.map((member) => (
-            <div key={member.id} className="rounded-xl border border-border p-4">
-              <p className="font-medium">{member.full_name}</p>
-              {member.reg_number && (
-                <Link
-                  to="/u/$regNo"
-                  params={{ regNo: member.reg_number }}
-                  className="font-mono text-xs text-accent hover:underline"
-                >
-                  {member.reg_number}
-                </Link>
-              )}
-              {isCreator && member.user_id !== access.data?.userId && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3"
-                  disabled={busy}
-                  onClick={() =>
-                    run(() => kick({ data: { membershipId: member.id } }), "Member removed.")
-                  }
-                >
-                  Remove
-                </Button>
-              )}
-            </div>
-          ))}
+          {sortedMembers.map((member) => {
+            const isLeader = member.user_id === creatorId;
+            return (
+              <div key={member.id} className="rounded-xl border border-border p-4">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{member.full_name}</p>
+                  {isLeader && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      Leader
+                    </Badge>
+                  )}
+                </div>
+                {member.reg_number && (
+                  <Link
+                    to="/u/$regNo"
+                    params={{ regNo: member.reg_number }}
+                    className="font-mono text-xs text-accent hover:underline"
+                  >
+                    {member.reg_number}
+                  </Link>
+                )}
+                {member.programme && (
+                  <p className="mt-1 text-xs text-muted-foreground">{member.programme}</p>
+                )}
+                {member.skills.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {member.skills.map((skill) => (
+                      <Badge key={skill} variant="outline" className="font-mono text-[10px]">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {isCreator && member.user_id !== access.data?.userId && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-3"
+                    disabled={busy}
+                    onClick={() =>
+                      run(() => kick({ data: { membershipId: member.id } }), "Member removed.")
+                    }
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -270,6 +344,40 @@ function TeamPage() {
         >
           Leave team
         </Button>
+      )}
+
+      {isCreator && (
+        <div className="mt-8 border-t border-border pt-6">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={busy}>
+                Delete team
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this team?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently removes the team {data.team.name}, its members and all join
+                  requests. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={busy}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete();
+                  }}
+                >
+                  {busy ? "Deleting…" : "Delete team"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       )}
     </div>
   );
